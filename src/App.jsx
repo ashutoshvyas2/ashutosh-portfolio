@@ -10,7 +10,7 @@ import CreativeGallery from './components/CreativeGallery';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import ResumeModal from './components/ResumeModal';
-import PacmanCursor from './components/PacmanCursor';
+import F1Cursor from './components/F1Cursor';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -42,8 +42,8 @@ export default function App() {
       {/* Native CSS Scroll-driven progress indicator */}
       <ScrollProgress />
 
-      {/* Interactive Cursor-Chasing Sleeping Pacman Companion */}
-      <PacmanCursor />
+      {/* Interactive Cursor-Chasing F1 Car & Pit Crew Companion */}
+      <F1Cursor />
 
       {/* Floating Island Apple Navigation Dock */}
       <Navbar
