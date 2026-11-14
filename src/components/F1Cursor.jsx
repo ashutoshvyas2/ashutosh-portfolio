@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 
 /**
  * F1Cursor
- * High-performance F1 race car that chases the cursor like a racing line.
- * When the cursor comes to a stop:
- * - A full F1 Pit Crew arrives with tire gunners, jacks, and impact wrenches.
- * - Car lifts up into the Pit Box, tires get swapped with micro-sparks.
- * - A digital F1 stopwatch counts a lightning 1.8s pit stop.
- * - Moving the mouse releases the car with green lights and wheelspin smoke!
+ * High-performance F1 race car that chases the cursor with butter-smooth glide physics.
+ * Features:
+ * - Butter-smooth glide interpolation (restoring the fluid 60/120fps glide from Pacman).
+ * - Articulated Front Aerodynamics: Front wheels and front wing cascades physically angle into turns.
+ * - Active Rear Wing DRS: The rear flap actively opens on straights and snaps closed on braking/cornering.
+ * - 1.8-second Pit Stop: Full pit crew arrives with jacks, tire mechanics, sparks, and digital telemetry when resting.
  */
 export default function F1Cursor() {
   const [enabled, setEnabled] = useState(true);
@@ -16,10 +16,11 @@ export default function F1Cursor() {
   const [pitStatus, setPitStatus] = useState('BOX BOX');
   const [tiresFitted, setTiresFitted] = useState(false);
   const [launchSmoke, setLaunchSmoke] = useState(false);
+  const [steerAngle, setSteerAngle] = useState(0);
+  const [isDrsOpen, setIsDrsOpen] = useState(false);
 
   const posRef = useRef({ x: -100, y: -100 });
   const targetRef = useRef({ x: -100, y: -100 });
-  const velocityRef = useRef({ x: 0, y: 0 });
   const rotationRef = useRef(0);
   const lastMoveTimeRef = useRef(Date.now());
   const pitActiveRef = useRef(false);
@@ -69,16 +70,16 @@ export default function F1Cursor() {
       const dy = targetRef.current.y - posRef.current.y;
       const dist = Math.hypot(dx, dy);
 
-      // Pit Stop detection: cursor motionless for > 1200ms and car has smoothly decelerated into the pit box
-      const currentSpeed = Math.hypot(velocityRef.current.x, velocityRef.current.y);
-      if (timeSinceMove > 1200 && dist < 50 && currentSpeed < 1.6) {
+      // Pit Stop detection: cursor still for > 1300ms & car within stopping range
+      if (timeSinceMove > 1300 && dist < 42) {
         if (!pitActiveRef.current) {
           pitActiveRef.current = true;
           pitStartRef.current = now;
           setIsPitStop(true);
           setPitStatus('BOX BOX');
           setTiresFitted(false);
-          velocityRef.current = { x: 0, y: 0 };
+          setSteerAngle(0);
+          setIsDrsOpen(false);
         } else {
           // Timer progression for pit stop
           const elapsed = (now - pitStartRef.current) / 1000;
@@ -101,27 +102,34 @@ export default function F1Cursor() {
       }
 
       if (!pitActiveRef.current) {
-        // Realistic aerodynamic F1 racing lag & momentum:
-        // Car trails ~70-120px behind the cursor with smooth cornering inertia
-        const accel = 0.045;
-        const friction = 0.70;
+        // Butter-smooth gliding physics (identical to Pacman's fluid motion) with tuned trailing lag
+        const speed = Math.min(0.12, Math.max(0.06, dist * 0.00065));
+        posRef.current.x += dx * speed;
+        posRef.current.y += dy * speed;
 
-        velocityRef.current.x = (velocityRef.current.x + dx * accel) * friction;
-        velocityRef.current.y = (velocityRef.current.y + dy * accel) * friction;
-
-        posRef.current.x += velocityRef.current.x;
-        posRef.current.y += velocityRef.current.y;
-
-        // Aerodynamic steering: smoothly bank towards the velocity vector
-        const speed = Math.hypot(velocityRef.current.x, velocityRef.current.y);
-        if (speed > 0.6) {
-          const targetAngle = Math.atan2(velocityRef.current.y, velocityRef.current.x) * (180 / Math.PI);
+        // Aerodynamic steering: rotate smoothly towards cursor direction
+        if (dist > 6) {
+          const targetAngle = Math.atan2(dy, dx) * (180 / Math.PI);
           let diff = targetAngle - currentRotation;
           while (diff < -180) diff += 360;
           while (diff > 180) diff -= 360;
-          currentRotation += diff * 0.16; // Smooth banking rotation
+          currentRotation += diff * 0.20;
           rotationRef.current = currentRotation;
+
+          // Articulated Front Steering & Active Front Wing Flaps
+          const calculatedSteer = Math.max(-22, Math.min(22, diff * 1.35));
+          setSteerAngle(calculatedSteer);
+
+          // Active Rear Wing DRS (Drag Reduction System) on high-speed straights
+          const drsActive = dist > 45 && Math.abs(diff) < 9;
+          setIsDrsOpen(drsActive);
+        } else {
+          setSteerAngle(0);
+          setIsDrsOpen(false);
         }
+      } else {
+        setSteerAngle(0);
+        setIsDrsOpen(false);
       }
 
       if (containerRef.current) {
@@ -180,25 +188,22 @@ export default function F1Cursor() {
               </div>
 
               {/* Front Jack Operator */}
-              <div className="absolute top-[28px] right-[4px] flex items-center">
+              <div className="absolute top-[29px] right-[2px] flex items-center">
                 <div className="w-4 h-4 rounded-full bg-cyan-500/80 border border-white/20 shadow-md flex items-center justify-center text-[7px] font-bold text-black animate-bounce">
                   FJ
                 </div>
-                {/* Jack lever bar */}
                 <div className="w-3 h-1 bg-zinc-400 rounded-sm" />
               </div>
 
               {/* Rear Jack Operator */}
-              <div className="absolute top-[28px] left-[6px] flex items-center flex-row-reverse">
+              <div className="absolute top-[29px] left-[4px] flex items-center flex-row-reverse">
                 <div className="w-4 h-4 rounded-full bg-cyan-500/80 border border-white/20 shadow-md flex items-center justify-center text-[7px] font-bold text-black animate-bounce">
                   RJ
                 </div>
-                {/* Jack lever bar */}
                 <div className="w-3 h-1 bg-zinc-400 rounded-sm" />
               </div>
 
               {/* 4 Tire Mechanics with Impact Wheel Guns & Sparks */}
-              {/* Front-Left Tire Gunner */}
               <div className="absolute top-[6px] right-[24px] flex flex-col items-center animate-pulse">
                 <span className="text-[10px] animate-spin">⚡</span>
                 <div className="w-3.5 h-3.5 rounded-full bg-amber-500 border border-white/20 text-[6px] flex items-center justify-center font-bold text-black">
@@ -206,7 +211,6 @@ export default function F1Cursor() {
                 </div>
               </div>
 
-              {/* Front-Right Tire Gunner */}
               <div className="absolute bottom-[6px] right-[24px] flex flex-col items-center animate-pulse">
                 <div className="w-3.5 h-3.5 rounded-full bg-amber-500 border border-white/20 text-[6px] flex items-center justify-center font-bold text-black">
                   W
@@ -214,7 +218,6 @@ export default function F1Cursor() {
                 <span className="text-[10px] animate-spin">⚡</span>
               </div>
 
-              {/* Rear-Left Tire Gunner */}
               <div className="absolute top-[4px] left-[26px] flex flex-col items-center animate-pulse">
                 <span className="text-[10px] animate-spin">⚡</span>
                 <div className="w-3.5 h-3.5 rounded-full bg-amber-500 border border-white/20 text-[6px] flex items-center justify-center font-bold text-black">
@@ -222,7 +225,6 @@ export default function F1Cursor() {
                 </div>
               </div>
 
-              {/* Rear-Right Tire Gunner */}
               <div className="absolute bottom-[4px] left-[26px] flex flex-col items-center animate-pulse">
                 <div className="w-3.5 h-3.5 rounded-full bg-amber-500 border border-white/20 text-[6px] flex items-center justify-center font-bold text-black">
                   W
@@ -233,7 +235,7 @@ export default function F1Cursor() {
           )}
 
           {/* ========================================================
-              F1 CAR VECTOR (Precision Aerodynamic Top-Down View)
+              F1 CAR VECTOR (80px Precision Aerodynamic Top-Down View)
              ======================================================== */}
           <svg
             width="80"
@@ -260,7 +262,7 @@ export default function F1Cursor() {
               </linearGradient>
             </defs>
 
-            {/* Slipstream Aerodynamic Wake Trail (Visualizes high-speed trailing lag) */}
+            {/* Slipstream Aerodynamic Wake Trail */}
             {!isPitStop && (
               <g opacity="0.75">
                 <line x1="-42" y1="11" x2="2" y2="11" stroke="#22d3ee" strokeWidth="1.5" strokeDasharray="6 4" />
@@ -269,9 +271,26 @@ export default function F1Cursor() {
               </g>
             )}
 
-            {/* Rear Wing Endplates & Main Plane */}
+            {/* ======================================================
+                ACTIVE REAR WING (Endplates + Lower Plane + Moving DRS Flap)
+               ====================================================== */}
+            {/* Rear Wing Endplates */}
             <rect x="2" y="6" width="6" height="28" rx="1.5" fill="#09090b" stroke="#06b6d4" strokeWidth="1" />
-            <rect x="4" y="9" width="4" height="22" fill="#22d3ee" />
+
+            {/* Lower Main Plane (Fixed Downforce) */}
+            <rect x="4" y="9" width="3" height="22" fill="#0e7490" />
+
+            {/* Active Upper DRS Flap: Lifts back on straights to lower drag */}
+            <g
+              transform={isDrsOpen ? 'translate(-3.5, 0)' : 'translate(0, 0)'}
+              className="transition-transform duration-150"
+            >
+              <rect x="5" y="9" width="3" height="22" rx="0.5" fill="#22d3ee" stroke="#0891b2" strokeWidth="0.5" />
+              {/* DRS Active Glow Indicator */}
+              {isDrsOpen && (
+                <rect x="4.5" y="17" width="2" height="6" rx="0.5" fill="#10b981" className="animate-pulse" />
+              )}
+            </g>
 
             {/* Rear Tires with Red Pirelli Soft Compound Stripes */}
             <g>
@@ -304,12 +323,9 @@ export default function F1Cursor() {
 
             {/* Halo Safety Cockpit & Driver Helmet */}
             <g>
-              {/* Cockpit opening */}
               <ellipse cx="36" cy="20" rx="6" ry="3.5" fill="#09090b" />
-              {/* Driver Helmet (Neon Cyan / Visor) */}
               <circle cx="36" cy="20" r="2.5" fill="#facc15" />
               <rect x="36.5" y="19" width="2" height="2" rx="0.5" fill="#18181b" />
-              {/* Halo Titanium Spine */}
               <line x1="32" y1="20" x2="42" y2="20" stroke="#71717a" strokeWidth="1.2" />
             </g>
 
@@ -317,27 +333,39 @@ export default function F1Cursor() {
             <line x1="44" y1="16" x2="52" y2="7" stroke="#71717a" strokeWidth="0.9" />
             <line x1="44" y1="24" x2="52" y2="33" stroke="#71717a" strokeWidth="0.9" />
 
-            {/* Front Tires with Red Pirelli Soft Compound Stripes */}
-            <g>
-              {/* Front Left Tire */}
+            {/* ======================================================
+                ARTICULATED FRONT TIRES (Steers dynamically on wheel hubs)
+               ====================================================== */}
+            {/* Front Left Tire (Rotates around hub at 54, 6) */}
+            <g transform={`rotate(${steerAngle}, 54, 6)`} className="transition-transform duration-75">
               <rect x="48" y="3" width="12" height="6" rx="2" fill="url(#tireGrad)" stroke="#111" strokeWidth="0.8" />
               <line x1="48" y1="6" x2="60" y2="6" stroke="#ef4444" strokeWidth="1.2" />
+            </g>
 
-              {/* Front Right Tire */}
+            {/* Front Right Tire (Rotates around hub at 54, 34) */}
+            <g transform={`rotate(${steerAngle}, 54, 34)`} className="transition-transform duration-75">
               <rect x="48" y="31" width="12" height="6" rx="2" fill="url(#tireGrad)" stroke="#111" strokeWidth="0.8" />
               <line x1="48" y1="34" x2="60" y2="34" stroke="#ef4444" strokeWidth="1.2" />
             </g>
 
-            {/* Front Nose Cone & Multi-Element Front Wing */}
-            <path
-              d="M 64 8 L 74 12 L 74 28 L 64 32 L 63 26 L 68 20 L 63 14 Z"
-              fill="#06b6d4"
-              stroke="#0891b2"
-              strokeWidth="0.8"
-            />
-            {/* Front Wing Cascade elements */}
-            <line x1="66" y1="10" x2="72" y2="13" stroke="#ffffff" strokeWidth="0.8" opacity="0.8" />
-            <line x1="66" y1="30" x2="72" y2="27" stroke="#ffffff" strokeWidth="0.8" opacity="0.8" />
+            {/* ======================================================
+                ACTIVE ARTICULATED FRONT WING (Flaps angle into turns)
+               ====================================================== */}
+            <g transform={`rotate(${steerAngle * 0.65}, 68, 20)`} className="transition-transform duration-75">
+              {/* Multi-Element Aerodynamic Main Plane */}
+              <path
+                d="M 64 8 L 74 11 L 75 20 L 74 29 L 64 32 L 63 26 L 68 20 L 63 14 Z"
+                fill="#06b6d4"
+                stroke="#0891b2"
+                strokeWidth="0.8"
+              />
+              {/* Front Wing Cascade Elements */}
+              <line x1="66" y1="10" x2="73" y2="13" stroke="#ffffff" strokeWidth="1" opacity="0.9" />
+              <line x1="66" y1="30" x2="73" y2="27" stroke="#ffffff" strokeWidth="1" opacity="0.9" />
+              {/* Endplate Vortex Generators */}
+              <rect x="63" y="7" width="9" height="1.8" rx="0.5" fill="#22d3ee" />
+              <rect x="63" y="31.2" width="9" height="1.8" rx="0.5" fill="#22d3ee" />
+            </g>
 
             {/* Rear Rain Safety Light (Pulsing Red) */}
             <circle cx="2.5" cy="20" r="1.5" fill="#ef4444" className="animate-pulse" />
@@ -365,6 +393,8 @@ export default function F1Cursor() {
             {enabled
               ? isPitStop
                 ? `🏎️ PIT BOX (${pitTime}s)`
+                : isDrsOpen
+                ? '🏎️ F1: DRS OPEN ⚡'
                 : '🏎️ F1 TELEMETRY: RACING'
               : '🏎️ F1: OFF'}
           </span>
