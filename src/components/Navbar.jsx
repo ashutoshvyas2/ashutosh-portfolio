@@ -2,43 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Sparkles, Menu, X, ArrowUpRight } from 'lucide-react';
 import { personalInfo } from '../data/portfolioData';
 
-export default function Navbar({ onOpenResume, onNavigate, viewMode = 'overview' }) {
+export default function Navbar({ onOpenResume, activeTab = 'overview', onSelectTab }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
-    if (viewMode === 'overview') {
-      setActiveSection('hero');
-      return;
-    }
-
     const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
-
-      const sections = ['hero', 'highlights', 'prototypes', 'experience', 'specs', 'gallery', 'contact'];
-      const scrollPos = window.scrollY + 200;
-
-      for (const section of sections) {
-        const el = document.getElementById(section);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPos >= top && scrollPos < top + height) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
+      setScrolled(window.scrollY > 20);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [viewMode]);
+  }, []);
 
   const navLinks = [
-    { id: 'hero', label: 'Overview' },
-    { id: 'highlights', label: 'Innovations' },
+    { id: 'overview', label: 'Overview' },
+    { id: 'innovations', label: 'Innovations' },
     { id: 'prototypes', label: 'Prototypes' },
     { id: 'experience', label: 'Experience' },
     { id: 'specs', label: 'Tech Specs' },
@@ -48,15 +27,8 @@ export default function Navbar({ onOpenResume, onNavigate, viewMode = 'overview'
 
   const handleNavClick = (id) => {
     setMobileMenuOpen(false);
-    if (onNavigate) {
-      onNavigate(id);
-    } else {
-      const element = document.getElementById(id);
-      if (element) {
-        const yOffset = -80;
-        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }
+    if (onSelectTab) {
+      onSelectTab(id);
     }
   };
 
@@ -64,20 +36,20 @@ export default function Navbar({ onOpenResume, onNavigate, viewMode = 'overview'
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ease-out flex justify-center px-4 sm:px-6 ${
-          scrolled ? 'pt-3 pb-2' : 'pt-6 pb-4'
+          scrolled ? 'pt-3 pb-2' : 'pt-5 pb-3'
         }`}
       >
         <nav
-          className={`flex items-center justify-between transition-all duration-500 w-full max-w-5xl rounded-full px-5 py-2.5 sm:px-6 sm:py-3 ${
+          className={`flex items-center justify-between transition-all duration-500 w-full max-w-5xl rounded-full px-5 py-2.5 sm:px-6 sm:py-2.5 ${
             scrolled
               ? 'apple-glass shadow-2xl shadow-black/80 border border-white/15'
-              : 'bg-black/30 backdrop-blur-md border border-white/5'
+              : 'bg-black/40 backdrop-blur-md border border-white/10'
           }`}
           aria-label="Main Navigation"
         >
           {/* Brand & Live Status */}
           <button
-            onClick={() => handleNavClick('hero')}
+            onClick={() => handleNavClick('overview')}
             className="flex items-center gap-3 text-left focus:outline-none group cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-500 p-[1px] transition-transform duration-300 group-hover:scale-105">
@@ -99,14 +71,14 @@ export default function Navbar({ onOpenResume, onNavigate, viewMode = 'overview'
           {/* Desktop Nav Items */}
           <div className="hidden md:flex items-center gap-1 text-xs font-medium text-zinc-400">
             {navLinks.map((link) => {
-              const isActive = activeSection === link.id;
+              const isActive = activeTab === link.id;
               return (
                 <button
                   key={link.id}
                   onClick={() => handleNavClick(link.id)}
                   className={`px-3 py-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                     isActive
-                      ? 'text-white bg-white/10 font-semibold shadow-inner'
+                      ? 'text-white bg-white/15 font-semibold shadow-inner border border-white/10'
                       : 'hover:text-zinc-100 hover:bg-white/5'
                   }`}
                 >
@@ -148,20 +120,28 @@ export default function Navbar({ onOpenResume, onNavigate, viewMode = 'overview'
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-30 bg-black/85 backdrop-blur-2xl md:hidden pt-24 px-6 flex flex-col justify-between pb-12 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-30 bg-black/90 backdrop-blur-2xl md:hidden pt-24 px-6 flex flex-col justify-between pb-12 animate-in fade-in duration-200">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold px-3">
-              Navigation
+              Chapters
             </p>
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => handleNavClick(link.id)}
-                className="w-full text-left px-4 py-3 text-lg font-medium text-zinc-200 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer"
-              >
-                {link.label}
-              </button>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = activeTab === link.id;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => handleNavClick(link.id)}
+                  className={`w-full text-left px-4 py-3 text-lg font-medium rounded-xl transition-all cursor-pointer flex items-center justify-between ${
+                    isActive
+                      ? 'text-white bg-white/10 font-semibold'
+                      : 'text-zinc-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {isActive && <span className="w-2 h-2 rounded-full bg-blue-400" />}
+                </button>
+              );
+            })}
           </div>
 
           <div className="space-y-3 pt-6 border-t border-white/10">
