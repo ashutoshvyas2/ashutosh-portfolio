@@ -69,14 +69,16 @@ export default function F1Cursor() {
       const dy = targetRef.current.y - posRef.current.y;
       const dist = Math.hypot(dx, dy);
 
-      // Pit Stop detection: cursor still for > 1300ms & car within stopping range
-      if (timeSinceMove > 1300 && dist < 45) {
+      // Pit Stop detection: cursor motionless for > 1200ms and car has smoothly decelerated into the pit box
+      const currentSpeed = Math.hypot(velocityRef.current.x, velocityRef.current.y);
+      if (timeSinceMove > 1200 && dist < 50 && currentSpeed < 1.6) {
         if (!pitActiveRef.current) {
           pitActiveRef.current = true;
           pitStartRef.current = now;
           setIsPitStop(true);
           setPitStatus('BOX BOX');
           setTiresFitted(false);
+          velocityRef.current = { x: 0, y: 0 };
         } else {
           // Timer progression for pit stop
           const elapsed = (now - pitStartRef.current) / 1000;
@@ -99,18 +101,25 @@ export default function F1Cursor() {
       }
 
       if (!pitActiveRef.current) {
-        // High-performance racing physics: smooth acceleration and braking
-        const speedFactor = Math.min(0.16, Math.max(0.06, dist * 0.0012));
-        posRef.current.x += dx * speedFactor;
-        posRef.current.y += dy * speedFactor;
+        // Realistic aerodynamic F1 racing lag & momentum:
+        // Car trails ~70-120px behind the cursor with smooth cornering inertia
+        const accel = 0.045;
+        const friction = 0.70;
 
-        // Aerodynamic steering: rotate car towards velocity
-        if (dist > 6) {
-          const targetAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+        velocityRef.current.x = (velocityRef.current.x + dx * accel) * friction;
+        velocityRef.current.y = (velocityRef.current.y + dy * accel) * friction;
+
+        posRef.current.x += velocityRef.current.x;
+        posRef.current.y += velocityRef.current.y;
+
+        // Aerodynamic steering: smoothly bank towards the velocity vector
+        const speed = Math.hypot(velocityRef.current.x, velocityRef.current.y);
+        if (speed > 0.6) {
+          const targetAngle = Math.atan2(velocityRef.current.y, velocityRef.current.x) * (180 / Math.PI);
           let diff = targetAngle - currentRotation;
           while (diff < -180) diff += 360;
           while (diff > 180) diff -= 360;
-          currentRotation += diff * 0.22;
+          currentRotation += diff * 0.16; // Smooth banking rotation
           rotationRef.current = currentRotation;
         }
       }
@@ -251,11 +260,12 @@ export default function F1Cursor() {
               </linearGradient>
             </defs>
 
-            {/* Slipstream Aerodynamic Wake Trail (When driving fast) */}
+            {/* Slipstream Aerodynamic Wake Trail (Visualizes high-speed trailing lag) */}
             {!isPitStop && (
-              <g opacity="0.6">
-                <line x1="-20" y1="12" x2="2" y2="12" stroke="#22d3ee" strokeWidth="1.2" strokeDasharray="4 3" />
-                <line x1="-20" y1="28" x2="2" y2="28" stroke="#22d3ee" strokeWidth="1.2" strokeDasharray="4 3" />
+              <g opacity="0.75">
+                <line x1="-42" y1="11" x2="2" y2="11" stroke="#22d3ee" strokeWidth="1.5" strokeDasharray="6 4" />
+                <line x1="-42" y1="29" x2="2" y2="29" stroke="#22d3ee" strokeWidth="1.5" strokeDasharray="6 4" />
+                <line x1="-54" y1="20" x2="-6" y2="20" stroke="#38bdf8" strokeWidth="1" strokeDasharray="8 6" opacity="0.6" />
               </g>
             )}
 
