@@ -150,15 +150,15 @@ export default function F1Cursor() {
         className="fixed top-0 left-0 z-50 pointer-events-none select-none"
         style={{
           willChange: 'transform',
-          marginLeft: '-38px',
-          marginTop: '-20px',
+          marginLeft: '-40px',
+          marginTop: '-21px',
         }}
       >
         <div
           className="relative transition-transform duration-75"
           style={{
             transform: `rotate(${rotationRef.current}deg)`,
-            transformOrigin: '38px 20px',
+            transformOrigin: '40px 21px',
           }}
         >
           {/* ========================================================
@@ -236,8 +236,8 @@ export default function F1Cursor() {
               F1 CAR VECTOR (Precision Aerodynamic Top-Down View)
              ======================================================== */}
           <svg
-            width="76"
-            height="40"
+            width="80"
+            height="42"
             viewBox="0 0 76 40"
             className={`overflow-visible filter drop-shadow-[0_4px_10px_rgba(6,182,212,0.45)] transition-transform ${
               isPitStop ? 'scale-105' : ''
