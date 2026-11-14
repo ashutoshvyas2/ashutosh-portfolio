@@ -105,6 +105,80 @@
   animation: subtle-shimmer 6s infinite ease-in-out;
 }
 
+/* Pacman Companion Animations */
+@keyframes pacman-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04, 0.96);
+  }
+}
+.animate-pacman-breathe {
+  animation: pacman-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes zzz-float-1 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  30% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(14px, -24px) scale(1.1);
+  }
+}
+
+@keyframes zzz-float-2 {
+  0% {
+    opacity: 0;
+    transform: translate(2px, 2px) scale(0.5);
+  }
+  30% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(22px, -34px) scale(1.15);
+  }
+}
+
+@keyframes zzz-float-3 {
+  0% {
+    opacity: 0;
+    transform: translate(4px, 4px) scale(0.4);
+  }
+  30% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(30px, -44px) scale(1.2);
+  }
+}
+
+.animate-zzz-1 {
+  animation: zzz-float-1 2.2s ease-out infinite;
+}
+.animate-zzz-2 {
+  animation: zzz-float-2 2.2s ease-out infinite 0.7s;
+}
+.animate-zzz-3 {
+  animation: zzz-float-3 2.2s ease-out infinite 1.4s;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

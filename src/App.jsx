@@ -10,6 +10,7 @@ import CreativeGallery from './components/CreativeGallery';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import ResumeModal from './components/ResumeModal';
+import PacmanCursor from './components/PacmanCursor';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,6 +41,9 @@ export default function App() {
     <div className="min-h-screen bg-[#050507] text-[#f5f5f7] relative selection:bg-blue-500/30 selection:text-white">
       {/* Native CSS Scroll-driven progress indicator */}
       <ScrollProgress />
+
+      {/* Interactive Cursor-Chasing Sleeping Pacman Companion */}
+      <PacmanCursor />
 
       {/* Floating Island Apple Navigation Dock */}
       <Navbar
