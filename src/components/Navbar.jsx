@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Sparkles, Menu, X, ArrowUpRight } from 'lucide-react';
 import { personalInfo } from '../data/portfolioData';
 
-export default function Navbar({ onOpenResume }) {
+export default function Navbar({ onOpenResume, onNavigate, viewMode = 'overview' }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
+    if (viewMode === 'overview') {
+      setActiveSection('hero');
+      return;
+    }
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 40);
 
@@ -29,7 +34,7 @@ export default function Navbar({ onOpenResume }) {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [viewMode]);
 
   const navLinks = [
     { id: 'hero', label: 'Overview' },
@@ -41,13 +46,17 @@ export default function Navbar({ onOpenResume }) {
     { id: 'contact', label: 'Connect' },
   ];
 
-  const scrollTo = (id) => {
+  const handleNavClick = (id) => {
     setMobileMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      const yOffset = -80;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+    if (onNavigate) {
+      onNavigate(id);
+    } else {
+      const element = document.getElementById(id);
+      if (element) {
+        const yOffset = -80;
+        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
     }
   };
 
@@ -68,8 +77,8 @@ export default function Navbar({ onOpenResume }) {
         >
           {/* Brand & Live Status */}
           <button
-            onClick={() => scrollTo('hero')}
-            className="flex items-center gap-3 text-left focus:outline-none group"
+            onClick={() => handleNavClick('hero')}
+            className="flex items-center gap-3 text-left focus:outline-none group cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-500 p-[1px] transition-transform duration-300 group-hover:scale-105">
               <div className="w-full h-full bg-[#090a0f] rounded-full flex items-center justify-center font-bold text-xs tracking-wider text-white">
@@ -94,8 +103,8 @@ export default function Navbar({ onOpenResume }) {
               return (
                 <button
                   key={link.id}
-                  onClick={() => scrollTo(link.id)}
-                  className={`px-3 py-1.5 rounded-full transition-all duration-300 ${
+                  onClick={() => handleNavClick(link.id)}
+                  className={`px-3 py-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                     isActive
                       ? 'text-white bg-white/10 font-semibold shadow-inner'
                       : 'hover:text-zinc-100 hover:bg-white/5'
@@ -111,15 +120,15 @@ export default function Navbar({ onOpenResume }) {
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenResume}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/25 transition-all duration-200 active:scale-95"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/25 transition-all duration-200 active:scale-95 cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5 text-blue-400" />
               <span>Resume</span>
             </button>
 
             <button
-              onClick={() => scrollTo('contact')}
-              className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 transition-all duration-200 active:scale-95"
+              onClick={() => handleNavClick('contact')}
+              className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 transition-all duration-200 active:scale-95 cursor-pointer"
             >
               <span>Get in Touch</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -128,7 +137,7 @@ export default function Navbar({ onOpenResume }) {
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+              className="md:hidden p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -147,8 +156,8 @@ export default function Navbar({ onOpenResume }) {
             {navLinks.map((link) => (
               <button
                 key={link.id}
-                onClick={() => scrollTo(link.id)}
-                className="w-full text-left px-4 py-3 text-lg font-medium text-zinc-200 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                onClick={() => handleNavClick(link.id)}
+                className="w-full text-left px-4 py-3 text-lg font-medium text-zinc-200 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer"
               >
                 {link.label}
               </button>
@@ -161,14 +170,14 @@ export default function Navbar({ onOpenResume }) {
                 setMobileMenuOpen(false);
                 onOpenResume();
               }}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/15"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/15 cursor-pointer"
             >
               <FileText className="w-4 h-4 text-blue-400" />
               <span>View Full Verified Resume</span>
             </button>
             <button
-              onClick={() => scrollTo('contact')}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/30"
+              onClick={() => handleNavClick('contact')}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/30 cursor-pointer"
             >
               <span>Contact Ashutosh</span>
               <ArrowUpRight className="w-4 h-4" />

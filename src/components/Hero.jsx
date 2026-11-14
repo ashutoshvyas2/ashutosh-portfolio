@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowDown, Code2, Database, Sparkles, Terminal, Copy, Check, ChevronRight, Layers, TrendingUp } from 'lucide-react';
 import { personalInfo, stats } from '../data/portfolioData';
 
-export default function Hero({ onOpenResume }) {
+export default function Hero({ onOpenResume, onExplore }) {
   const [copied, setCopied] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
@@ -43,13 +43,13 @@ export default function Hero({ onOpenResume }) {
 
         {/* Action Button Row */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-          <a
-            href="#highlights"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition-all duration-300 shadow-xl shadow-white/10 active:scale-95"
+          <button
+            onClick={onExplore}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition-all duration-300 shadow-xl shadow-white/10 active:scale-95 cursor-pointer"
           >
             <span>Explore Innovations</span>
             <ChevronRight className="w-4 h-4" />
-          </a>
+          </button>
 
           <button
             onClick={onOpenResume}
@@ -175,13 +175,13 @@ export default function Hero({ onOpenResume }) {
       </div>
 
       {/* Down Scroll Indicator */}
-      <a
-        href="#highlights"
+      <button
+        onClick={onExplore}
         aria-label="Scroll down to Innovations"
-        className="mt-10 p-2 rounded-full text-zinc-500 hover:text-white transition-colors animate-bounce"
+        className="mt-10 p-2 rounded-full text-zinc-500 hover:text-white transition-colors animate-bounce cursor-pointer focus:outline-none"
       >
         <ArrowDown className="w-5 h-5" />
-      </a>
+      </button>
     </section>
   );
 }
