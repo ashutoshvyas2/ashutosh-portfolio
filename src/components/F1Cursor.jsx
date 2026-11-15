@@ -566,7 +566,7 @@ export default function F1Cursor() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10b981]" />
                 <span className="text-xs font-mono font-bold tracking-wider text-white">
-                  PIT WALL TELEMETRY // #2
+                  PIT WALL TELEMETRY
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
