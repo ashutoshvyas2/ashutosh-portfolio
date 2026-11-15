@@ -1,16 +1,82 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { 
+  Gauge, 
+  Radio, 
+  Zap, 
+  ChevronDown, 
+  ChevronUp, 
+  Sliders, 
+  Power, 
+  RotateCcw,
+  Flag,
+  Crosshair
+} from 'lucide-react';
 
 /**
- * F1Cursor
- * High-performance F1 race car that chases the cursor with butter-smooth glide physics.
- * Features:
- * - Butter-smooth glide interpolation (restoring the fluid 60/120fps glide from Pacman).
- * - Articulated Front Aerodynamics: Front wheels and front wing cascades physically angle into turns.
- * - Active Rear Wing DRS: The rear flap actively opens on straights and snaps closed on braking/cornering.
- * - 1.8-second Pit Stop: Full pit crew arrives with jacks, tire mechanics, sparks, and digital telemetry when resting.
+ * Formula 1 Tire Compound Configurations
+ */
+const TIRE_COMPOUNDS = {
+  soft: {
+    id: 'soft',
+    name: 'Soft',
+    code: 'C5',
+    color: '#ef4444',
+    bgBadge: 'bg-red-500/20 text-red-400 border-red-500/40',
+    grip: 1.15,
+    gripLabel: '+15% Grip (High Bite)',
+    desc: 'Max downforce & instantaneous steering responsiveness',
+  },
+  medium: {
+    id: 'medium',
+    name: 'Medium',
+    code: 'C3',
+    color: '#eab308',
+    bgBadge: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
+    grip: 1.0,
+    gripLabel: 'Standard Grip (Balanced)',
+    desc: 'Optimal aerodynamic balance between speed and glide',
+  },
+  hard: {
+    id: 'hard',
+    name: 'Hard',
+    code: 'C1',
+    color: '#f4f4f5',
+    bgBadge: 'bg-zinc-300/20 text-zinc-200 border-zinc-400/40',
+    grip: 0.85,
+    gripLabel: '-15% Grip (Long Drift)',
+    desc: 'High aerodynamic momentum with floaty, smooth trailing lag',
+  },
+  inter: {
+    id: 'inter',
+    name: 'Inter',
+    code: 'WET',
+    color: '#10b981',
+    bgBadge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
+    grip: 0.95,
+    gripLabel: 'Wet Grooved (Spray Trail)',
+    desc: 'Active tire tread grooves with water spray wake behind car',
+  },
+};
+
+/**
+ * Radio Voice Messages triggered by telemetry events
+ */
+const RADIO_MESSAGES = {
+  idle: 'Box, box, box! Hit your marks in the pit lane.',
+  pitStop: 'Crew ready on jacks. Wheel guns firing, changing all four.',
+  drsActive: 'DRS flap open! Battery deployment mode 8 active.',
+  highSpeed: 'Push push, purple in sector 2! Pace is flying.',
+  highG: 'Heavy lateral load through the apex, watch tire graining.',
+  normal: 'Telemetry normal. Power unit operating at peak thermal window.',
+};
+
+/**
+ * F1Cursor with Live Pit Wall Telemetry HUD (Option 2)
  */
 export default function F1Cursor() {
   const [enabled, setEnabled] = useState(true);
+  const [hudOpen, setHudOpen] = useState(false);
+  const [selectedTire, setSelectedTire] = useState('soft');
   const [isPitStop, setIsPitStop] = useState(false);
   const [pitTime, setPitTime] = useState('0.00');
   const [pitStatus, setPitStatus] = useState('BOX BOX');
@@ -19,6 +85,20 @@ export default function F1Cursor() {
   const [steerAngle, setSteerAngle] = useState(0);
   const [isDrsOpen, setIsDrsOpen] = useState(false);
 
+  // High-frequency telemetry refs (Direct DOM updates for 60/120 FPS zero-jank)
+  const speedTextRef = useRef(null);
+  const speedPillRef = useRef(null);
+  const gearTextRef = useRef(null);
+  const gearPillRef = useRef(null);
+  const rpmTextRef = useRef(null);
+  const rpmBarRef = useRef(null);
+  const gForceTextRef = useRef(null);
+  const gDotRef = useRef(null);
+  const drsBadgeRef = useRef(null);
+  const radioTextRef = useRef(null);
+  const shiftLightRefs = useRef([]);
+
+  // Physics & Animation tracking refs
   const posRef = useRef({ x: -100, y: -100 });
   const targetRef = useRef({ x: -100, y: -100 });
   const rotationRef = useRef(0);
@@ -27,6 +107,15 @@ export default function F1Cursor() {
   const pitStartRef = useRef(0);
   const animFrameRef = useRef(null);
   const containerRef = useRef(null);
+  const smoothSpeedRef = useRef(0);
+  const lateralGRef = useRef(0);
+  const tireRef = useRef(TIRE_COMPOUNDS.soft);
+  const lastRadioMsgRef = useRef('');
+
+  // Keep tireRef up to date with selected tire
+  useEffect(() => {
+    tireRef.current = TIRE_COMPOUNDS[selectedTire] || TIRE_COMPOUNDS.soft;
+  }, [selectedTire]);
 
   useEffect(() => {
     // Only initialize on desktop pointer devices
@@ -101,11 +190,17 @@ export default function F1Cursor() {
         }
       }
 
+      let currentSteer = 0;
+      let drsActive = false;
+
       if (!pitActiveRef.current) {
-        // Butter-smooth gliding physics (identical to Pacman's fluid motion) with tuned trailing lag
-        const speed = Math.min(0.12, Math.max(0.06, dist * 0.00065));
-        posRef.current.x += dx * speed;
-        posRef.current.y += dy * speed;
+        // Dynamic grip factor from selected tire compound
+        const grip = tireRef.current.grip || 1.0;
+        const baseSpeed = Math.min(0.12, Math.max(0.06, dist * 0.00065));
+        const effectiveSpeed = baseSpeed * grip;
+
+        posRef.current.x += dx * effectiveSpeed;
+        posRef.current.y += dy * effectiveSpeed;
 
         // Aerodynamic steering: rotate smoothly towards cursor direction
         if (dist > 6) {
@@ -117,11 +212,11 @@ export default function F1Cursor() {
           rotationRef.current = currentRotation;
 
           // Articulated Front Steering & Active Front Wing Flaps
-          const calculatedSteer = Math.max(-22, Math.min(22, diff * 1.35));
-          setSteerAngle(calculatedSteer);
+          currentSteer = Math.max(-22, Math.min(22, diff * 1.35));
+          setSteerAngle(currentSteer);
 
-          // Active Rear Wing DRS (Drag Reduction System) on high-speed straights
-          const drsActive = dist > 45 && Math.abs(diff) < 9;
+          // Active Rear Wing DRS on straights
+          drsActive = dist > 45 && Math.abs(diff) < 9;
           setIsDrsOpen(drsActive);
         } else {
           setSteerAngle(0);
@@ -132,6 +227,110 @@ export default function F1Cursor() {
         setIsDrsOpen(false);
       }
 
+      // ========================================================
+      // TELEMETRY CALCULATIONS (Speed, Gear, RPM, G-Force, Radio)
+      // ========================================================
+      const rawSpeed = pitActiveRef.current ? 0 : Math.min(348, Math.round(dist * 4.9));
+      smoothSpeedRef.current += (rawSpeed - smoothSpeedRef.current) * 0.14;
+      const speedKmH = Math.max(0, Math.round(smoothSpeedRef.current));
+
+      // F1 Gear ratio calculation
+      let currentGear = 'N';
+      if (speedKmH > 15) {
+        if (speedKmH < 65) currentGear = '1';
+        else if (speedKmH < 115) currentGear = '2';
+        else if (speedKmH < 165) currentGear = '3';
+        else if (speedKmH < 220) currentGear = '4';
+        else if (speedKmH < 265) currentGear = '5';
+        else if (speedKmH < 305) currentGear = '6';
+        else if (speedKmH < 330) currentGear = '7';
+        else currentGear = '8';
+      }
+
+      // RPM calculation (idle: 4,200 RPM, peak rev: 14,850 RPM)
+      let rpm = 4200;
+      if (speedKmH > 15) {
+        const gearNum = parseInt(currentGear) || 1;
+        const speedInGear = speedKmH - (gearNum - 1) * 38;
+        rpm = Math.min(14850, Math.round(7200 + (speedInGear / 60) * 7200));
+      } else if (pitActiveRef.current) {
+        rpm = 4000 + Math.round(Math.sin(now / 150) * 120);
+      }
+
+      // Lateral G-Force calculation
+      const rawG = (Math.abs(currentSteer) / 22) * (speedKmH / 300) * 4.8;
+      lateralGRef.current += (rawG - lateralGRef.current) * 0.16;
+      const lateralG = lateralGRef.current.toFixed(1);
+
+      // Contextual Pit Wall Radio Message
+      let currentRadioMsg = RADIO_MESSAGES.normal;
+      if (pitActiveRef.current) {
+        currentRadioMsg = tiresFitted ? 'Tires fitted. Green light at pit exit!' : RADIO_MESSAGES.pitStop;
+      } else if (drsActive) {
+        currentRadioMsg = RADIO_MESSAGES.drsActive;
+      } else if (speedKmH > 295) {
+        currentRadioMsg = RADIO_MESSAGES.highSpeed;
+      } else if (lateralGRef.current > 2.6) {
+        currentRadioMsg = RADIO_MESSAGES.highG;
+      }
+
+      // ========================================================
+      // DIRECT DOM TELEMETRY UPDATES (Zero React Re-render Lag)
+      // ========================================================
+      if (speedTextRef.current) speedTextRef.current.innerText = speedKmH;
+      if (speedPillRef.current) speedPillRef.current.innerText = `${speedKmH} km/h`;
+      if (gearTextRef.current) gearTextRef.current.innerText = currentGear;
+      if (gearPillRef.current) gearPillRef.current.innerText = currentGear === 'N' ? 'N' : `G${currentGear}`;
+      if (rpmTextRef.current) rpmTextRef.current.innerText = `${rpm.toLocaleString()} RPM`;
+      if (gForceTextRef.current) gForceTextRef.current.innerText = `${lateralG} G`;
+
+      // Update Rev Bar percentage
+      if (rpmBarRef.current) {
+        const pct = Math.min(100, Math.max(0, ((rpm - 4000) / 10850) * 100));
+        rpmBarRef.current.style.width = `${pct}%`;
+      }
+
+      // Update Shift Lights (10 LEDs: 3 Green, 4 Red, 3 Purple)
+      const litCount = Math.floor(((rpm - 6000) / 8850) * 10);
+      shiftLightRefs.current.forEach((led, idx) => {
+        if (!led) return;
+        const isLit = idx < litCount;
+        if (isLit) {
+          if (idx < 3) led.style.backgroundColor = '#10b981'; // Green
+          else if (idx < 7) led.style.backgroundColor = '#ef4444'; // Red
+          else led.style.backgroundColor = '#a855f7'; // Purple (Optimal Shift)
+          led.style.boxShadow = '0 0 6px currentColor';
+        } else {
+          led.style.backgroundColor = '#27272a';
+          led.style.boxShadow = 'none';
+        }
+      });
+
+      // Update 2D Friction Circle Dot (Lateral G Vector)
+      if (gDotRef.current) {
+        const xOffset = (currentSteer / 22) * 14;
+        const yOffset = (Math.min(1, speedKmH / 320) * 10) - 5;
+        gDotRef.current.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+      }
+
+      // Update DRS Active Badge
+      if (drsBadgeRef.current) {
+        if (drsActive) {
+          drsBadgeRef.current.innerText = 'DRS ACTIVE ⚡';
+          drsBadgeRef.current.className = 'text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse font-bold';
+        } else {
+          drsBadgeRef.current.innerText = 'DRS OFF';
+          drsBadgeRef.current.className = 'text-[9px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-white/5';
+        }
+      }
+
+      // Update Radio Message
+      if (radioTextRef.current && lastRadioMsgRef.current !== currentRadioMsg) {
+        lastRadioMsgRef.current = currentRadioMsg;
+        radioTextRef.current.innerText = currentRadioMsg;
+      }
+
+      // Move Car Position
       if (containerRef.current) {
         containerRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0)`;
       }
@@ -149,9 +348,13 @@ export default function F1Cursor() {
 
   if (!enabled) return null;
 
+  const currentTireObj = TIRE_COMPOUNDS[selectedTire] || TIRE_COMPOUNDS.soft;
+
   return (
     <>
-      {/* Floating F1 Car & Pit Crew Canvas */}
+      {/* ========================================================
+          FLOATING F1 CAR & PIT CREW CANVAS (30px Precision Racer)
+         ======================================================== */}
       <div
         ref={containerRef}
         aria-hidden="true"
@@ -170,7 +373,7 @@ export default function F1Cursor() {
           }}
         >
           {/* ========================================================
-              PIT STOP BOX & PIT CREW (Scaled for 30px F1 Car)
+              PIT STOP BOX & PIT CREW
              ======================================================== */}
           {isPitStop && (
             <div className="absolute pointer-events-none inset-0">
@@ -233,7 +436,7 @@ export default function F1Cursor() {
           )}
 
           {/* ========================================================
-              F1 CAR VECTOR (30px Precision Aerodynamic Top-Down View)
+              F1 CAR VECTOR (30px Dynamic Color-Coded Tire Compounds)
              ======================================================== */}
           <svg
             width="30"
@@ -260,66 +463,51 @@ export default function F1Cursor() {
               </linearGradient>
             </defs>
 
-            {/* Slipstream Aerodynamic Wake Trail */}
+            {/* Slipstream Wake Trail (Standard or Wet Spray) */}
             {!isPitStop && (
               <g opacity="0.75">
-                <line x1="-42" y1="11" x2="2" y2="11" stroke="#22d3ee" strokeWidth="1.5" strokeDasharray="6 4" />
-                <line x1="-42" y1="29" x2="2" y2="29" stroke="#22d3ee" strokeWidth="1.5" strokeDasharray="6 4" />
+                <line x1="-42" y1="11" x2="2" y2="11" stroke={selectedTire === 'inter' ? '#10b981' : '#22d3ee'} strokeWidth="1.5" strokeDasharray="6 4" />
+                <line x1="-42" y1="29" x2="2" y2="29" stroke={selectedTire === 'inter' ? '#10b981' : '#22d3ee'} strokeWidth="1.5" strokeDasharray="6 4" />
                 <line x1="-54" y1="20" x2="-6" y2="20" stroke="#38bdf8" strokeWidth="1" strokeDasharray="8 6" opacity="0.6" />
+                {selectedTire === 'inter' && (
+                  <circle cx="-25" cy="11" r="1.5" fill="#38bdf8" opacity="0.7" className="animate-ping" />
+                )}
               </g>
             )}
 
-            {/* ======================================================
-                ACTIVE REAR WING (Endplates + Lower Plane + Moving DRS Flap)
-               ====================================================== */}
             {/* Rear Wing Endplates */}
             <rect x="2" y="6" width="6" height="28" rx="1.5" fill="#09090b" stroke="#06b6d4" strokeWidth="1" />
-
-            {/* Lower Main Plane (Fixed Downforce) */}
             <rect x="4" y="9" width="3" height="22" fill="#0e7490" />
 
-            {/* Active Upper DRS Flap: Lifts back on straights to lower drag */}
+            {/* Active Upper DRS Flap */}
             <g
               transform={isDrsOpen ? 'translate(-3.5, 0)' : 'translate(0, 0)'}
               className="transition-transform duration-150"
             >
               <rect x="5" y="9" width="3" height="22" rx="0.5" fill="#22d3ee" stroke="#0891b2" strokeWidth="0.5" />
-              {/* DRS Active Glow Indicator */}
               {isDrsOpen && (
                 <rect x="4.5" y="17" width="2" height="6" rx="0.5" fill="#10b981" className="animate-pulse" />
               )}
             </g>
 
-            {/* Rear Tires with Red Pirelli Soft Compound Stripes */}
+            {/* Rear Tires with Dynamic Compound Color Stripe */}
             <g>
-              {/* Rear Left Tire */}
               <rect x="12" y="1" width="14" height="7" rx="2" fill="url(#tireGrad)" stroke="#111" strokeWidth="0.8" />
-              <line x1="12" y1="4.5" x2="26" y2="4.5" stroke="#ef4444" strokeWidth="1.2" />
+              <line x1="12" y1="4.5" x2="26" y2="4.5" stroke={currentTireObj.color} strokeWidth="1.2" />
 
-              {/* Rear Right Tire */}
               <rect x="12" y="32" width="14" height="7" rx="2" fill="url(#tireGrad)" stroke="#111" strokeWidth="0.8" />
-              <line x1="12" y1="35.5" x2="26" y2="35.5" stroke="#ef4444" strokeWidth="1.2" />
+              <line x1="12" y1="35.5" x2="26" y2="35.5" stroke={currentTireObj.color} strokeWidth="1.2" />
             </g>
 
-            {/* Aerodynamic Floor & Diffuser Strakes */}
-            <path
-              d="M 8 13 L 26 10 L 46 12 L 46 28 L 26 30 L 8 27 Z"
-              fill="#050507"
-              stroke="#27272a"
-              strokeWidth="0.8"
-            />
+            {/* Floor & Chassis */}
+            <path d="M 8 13 L 26 10 L 46 12 L 46 28 L 26 30 L 8 27 Z" fill="#050507" stroke="#27272a" strokeWidth="0.8" />
+            <path d="M 8 16 L 24 13 L 42 14 L 64 19 L 68 20 L 64 21 L 42 26 L 24 27 L 8 24 Z" fill="url(#chassisGrad)" />
 
-            {/* Main Chassis & Engine Cover */}
-            <path
-              d="M 8 16 L 24 13 L 42 14 L 64 19 L 68 20 L 64 21 L 42 26 L 24 27 L 8 24 Z"
-              fill="url(#chassisGrad)"
-            />
-
-            {/* Sidepod Air Intakes */}
+            {/* Sidepod Intakes */}
             <path d="M 28 13 L 38 13 L 42 15 L 28 15 Z" fill="#0891b2" />
             <path d="M 28 27 L 38 27 L 42 25 L 28 25 Z" fill="#0891b2" />
 
-            {/* Halo Safety Cockpit & Driver Helmet */}
+            {/* Halo Safety Cockpit & Helmet */}
             <g>
               <ellipse cx="36" cy="20" rx="6" ry="3.5" fill="#09090b" />
               <circle cx="36" cy="20" r="2.5" fill="#facc15" />
@@ -327,49 +515,36 @@ export default function F1Cursor() {
               <line x1="32" y1="20" x2="42" y2="20" stroke="#71717a" strokeWidth="1.2" />
             </g>
 
-            {/* Front Wishbone Suspension Arms */}
+            {/* Front Suspension Wishbones */}
             <line x1="44" y1="16" x2="52" y2="7" stroke="#71717a" strokeWidth="0.9" />
             <line x1="44" y1="24" x2="52" y2="33" stroke="#71717a" strokeWidth="0.9" />
 
-            {/* ======================================================
-                ARTICULATED FRONT TIRES (Steers dynamically on wheel hubs)
-               ====================================================== */}
-            {/* Front Left Tire (Rotates around hub at 54, 6) */}
+            {/* Front Left Tire (Dynamic Compound Stripe) */}
             <g transform={`rotate(${steerAngle}, 54, 6)`} className="transition-transform duration-75">
               <rect x="48" y="3" width="12" height="6" rx="2" fill="url(#tireGrad)" stroke="#111" strokeWidth="0.8" />
-              <line x1="48" y1="6" x2="60" y2="6" stroke="#ef4444" strokeWidth="1.2" />
+              <line x1="48" y1="6" x2="60" y2="6" stroke={currentTireObj.color} strokeWidth="1.2" />
             </g>
 
-            {/* Front Right Tire (Rotates around hub at 54, 34) */}
+            {/* Front Right Tire (Dynamic Compound Stripe) */}
             <g transform={`rotate(${steerAngle}, 54, 34)`} className="transition-transform duration-75">
               <rect x="48" y="31" width="12" height="6" rx="2" fill="url(#tireGrad)" stroke="#111" strokeWidth="0.8" />
-              <line x1="48" y1="34" x2="60" y2="34" stroke="#ef4444" strokeWidth="1.2" />
+              <line x1="48" y1="34" x2="60" y2="34" stroke={currentTireObj.color} strokeWidth="1.2" />
             </g>
 
-            {/* ======================================================
-                ACTIVE ARTICULATED FRONT WING (Flaps angle into turns)
-               ====================================================== */}
+            {/* Front Wing Flap Cascades */}
             <g transform={`rotate(${steerAngle * 0.65}, 68, 20)`} className="transition-transform duration-75">
-              {/* Multi-Element Aerodynamic Main Plane */}
-              <path
-                d="M 64 8 L 74 11 L 75 20 L 74 29 L 64 32 L 63 26 L 68 20 L 63 14 Z"
-                fill="#06b6d4"
-                stroke="#0891b2"
-                strokeWidth="0.8"
-              />
-              {/* Front Wing Cascade Elements */}
+              <path d="M 64 8 L 74 11 L 75 20 L 74 29 L 64 32 L 63 26 L 68 20 L 63 14 Z" fill="#06b6d4" stroke="#0891b2" strokeWidth="0.8" />
               <line x1="66" y1="10" x2="73" y2="13" stroke="#ffffff" strokeWidth="1" opacity="0.9" />
               <line x1="66" y1="30" x2="73" y2="27" stroke="#ffffff" strokeWidth="1" opacity="0.9" />
-              {/* Endplate Vortex Generators */}
               <rect x="63" y="7" width="9" height="1.8" rx="0.5" fill="#22d3ee" />
               <rect x="63" y="31.2" width="9" height="1.8" rx="0.5" fill="#22d3ee" />
             </g>
 
-            {/* Rear Rain Safety Light (Pulsing Red) */}
+            {/* Rear Rain Light */}
             <circle cx="2.5" cy="20" r="1.5" fill="#ef4444" className="animate-pulse" />
           </svg>
 
-          {/* Launch Wheelspin Smoke / Exhaust Boost */}
+          {/* Launch Smoke */}
           {launchSmoke && (
             <div className="absolute -left-4 top-0 flex items-center pointer-events-none animate-ping">
               <span className="text-[10px]">💨</span>
@@ -379,24 +554,259 @@ export default function F1Cursor() {
         </div>
       </div>
 
-      {/* Playful F1 Easter Egg Toggle Pill (Bottom-Left Corner) */}
-      <div className="fixed bottom-4 left-4 z-40 hidden sm:block">
-        <button
-          onClick={() => setEnabled(!enabled)}
-          title={enabled ? "Hide F1 Easter Egg" : "Enable F1 Easter Egg"}
-          className="apple-glass px-3 py-1.5 rounded-full text-[11px] text-zinc-300 hover:text-white border border-white/10 hover:border-cyan-500/30 transition-all flex items-center gap-2 shadow-2xl active:scale-95 cursor-pointer"
-        >
-          <span className={`w-2 h-2 rounded-full ${enabled ? (isPitStop ? 'bg-amber-400 animate-ping' : 'bg-emerald-400 animate-pulse') : 'bg-zinc-600'}`} />
-          <span>
-            {enabled
-              ? isPitStop
-                ? `🏎️ Pit Crew at Work (${pitTime}s)`
-                : isDrsOpen
-                ? '🏎️ DRS Open ⚡'
-                : '🏎️ F1 Easter Egg: On'
-              : '🏎️ F1 Easter Egg: Off'}
-          </span>
-        </button>
+      {/* ========================================================
+          F1 PIT WALL TELEMETRY HUD (Option 2 - Collapsible Dock)
+         ======================================================== */}
+      <div className="fixed bottom-4 left-4 z-40 hidden sm:block font-sans select-none">
+        {/* EXPANDED TELEMETRY HUD DASHBOARD */}
+        {hudOpen && (
+          <div className="mb-2 w-80 sm:w-88 apple-glass rounded-2xl p-4 border border-cyan-500/30 shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-2xl transition-all duration-300">
+            {/* Header / Title Bar */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10b981]" />
+                <span className="text-xs font-mono font-bold tracking-wider text-white">
+                  PIT WALL TELEMETRY // #2
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setHudOpen(false)}
+                  className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                  title="Collapse Telemetry HUD"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* F1 Steering Wheel Rev Lights (10 LEDs) */}
+            <div className="pt-3 pb-2">
+              <div className="flex items-center justify-between gap-1 px-1">
+                {[...Array(10)].map((_, i) => (
+                  <div
+                    key={i}
+                    ref={(el) => (shiftLightRefs.current[i] = el)}
+                    className="h-2 flex-1 rounded-sm bg-zinc-800 transition-colors duration-75"
+                  />
+                ))}
+              </div>
+              {/* Rev Progress Bar */}
+              <div className="mt-1 h-0.5 w-full bg-zinc-800/80 rounded-full overflow-hidden">
+                <div
+                  ref={rpmBarRef}
+                  className="h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-purple-500 transition-all duration-75"
+                  style={{ width: '0%' }}
+                />
+              </div>
+            </div>
+
+            {/* Primary Gauges: Speedometer + Gear + RPM */}
+            <div className="grid grid-cols-3 gap-2 py-2 items-center text-center bg-black/40 rounded-xl p-2.5 border border-white/5">
+              {/* Speedometer */}
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-mono">
+                  Speed
+                </span>
+                <div className="flex items-baseline gap-1 mt-0.5">
+                  <span
+                    ref={speedTextRef}
+                    className="text-2xl sm:text-3xl font-mono font-black text-cyan-400"
+                  >
+                    0
+                  </span>
+                  <span className="text-[10px] font-mono text-zinc-400">km/h</span>
+                </div>
+              </div>
+
+              {/* Gear Indicator */}
+              <div className="flex flex-col items-center border-x border-white/10">
+                <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-mono">
+                  Gear
+                </span>
+                <span
+                  ref={gearTextRef}
+                  className="text-3xl font-mono font-black text-yellow-400 mt-0.5 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]"
+                >
+                  N
+                </span>
+              </div>
+
+              {/* Engine RPM */}
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-mono">
+                  Engine
+                </span>
+                <span
+                  ref={rpmTextRef}
+                  className="text-xs sm:text-sm font-mono font-bold text-zinc-200 mt-1"
+                >
+                  4,200 RPM
+                </span>
+              </div>
+            </div>
+
+            {/* Secondary Telemetry: Lateral G-Force + DRS Flap */}
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {/* Lateral G-Force & 2D Friction Circle */}
+              <div className="bg-black/30 rounded-xl p-2 border border-white/5 flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-mono block">
+                    Lateral G
+                  </span>
+                  <span
+                    ref={gForceTextRef}
+                    className="text-sm font-mono font-bold text-white mt-0.5 block"
+                  >
+                    0.0 G
+                  </span>
+                </div>
+                {/* 2D Vector Crosshair */}
+                <div className="relative w-7 h-7 rounded-full border border-white/20 bg-zinc-900/80 flex items-center justify-center">
+                  <div className="absolute w-full h-[1px] bg-white/10" />
+                  <div className="absolute h-full w-[1px] bg-white/10" />
+                  <div
+                    ref={gDotRef}
+                    className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee] transition-transform duration-75"
+                  />
+                </div>
+              </div>
+
+              {/* DRS & Pit Delta */}
+              <div className="bg-black/30 rounded-xl p-2 border border-white/5 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-mono">
+                    Aero Wing
+                  </span>
+                  <span
+                    ref={drsBadgeRef}
+                    className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-white/5"
+                  >
+                    DRS OFF
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 mt-1">
+                  <span>PIT RECORD:</span>
+                  <span className="text-emerald-400 font-bold">1.82s ✓</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Pirelli Tire Compound Selector */}
+            <div className="mt-3 pt-2.5 border-t border-white/10">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 flex items-center gap-1.5">
+                  <Sliders className="w-3 h-3 text-cyan-400" />
+                  <span>Tire Compound</span>
+                </span>
+                <span className="text-[9px] font-mono text-zinc-400">
+                  {currentTireObj.gripLabel}
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {Object.values(TIRE_COMPOUNDS).map((compound) => {
+                  const isActive = selectedTire === compound.id;
+                  return (
+                    <button
+                      key={compound.id}
+                      onClick={() => setSelectedTire(compound.id)}
+                      className={`px-2 py-1.5 rounded-lg text-center transition-all cursor-pointer border ${
+                        isActive
+                          ? `${compound.bgBadge} shadow-[0_0_12px_rgba(255,255,255,0.15)] ring-1 ring-white/20 scale-[1.02]`
+                          : 'bg-black/20 text-zinc-400 hover:text-white border-white/5 hover:border-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: compound.color }}
+                        />
+                        <span className="text-[10px] font-mono font-bold">
+                          {compound.code}
+                        </span>
+                      </div>
+                      <span className="text-[8px] font-mono block text-zinc-400 uppercase">
+                        {compound.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pit Wall Team Radio Feed */}
+            <div className="mt-3 bg-black/50 rounded-xl p-2 border border-white/5 flex items-start gap-2">
+              <Radio className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5 animate-pulse" />
+              <div className="overflow-hidden">
+                <span className="text-[8px] font-mono uppercase tracking-wider text-zinc-400 block">
+                  Team Radio
+                </span>
+                <p
+                  ref={radioTextRef}
+                  className="text-[10px] font-mono text-zinc-300 leading-tight italic truncate"
+                >
+                  Telemetry online. Car in optimal thermal window.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer Power Toggle */}
+            <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-zinc-400">
+              <span className="font-mono text-[9px] text-zinc-400">
+                Move cursor to accelerate • Hold still to Box
+              </span>
+              <button
+                onClick={() => setEnabled(false)}
+                className="text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors cursor-pointer text-[9px] font-mono"
+                title="Turn off F1 cursor companion"
+              >
+                <Power className="w-2.5 h-2.5" />
+                <span>Disable</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* COMPACT DOCK PILL (Always visible when companion is enabled) */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setHudOpen(!hudOpen)}
+            className="apple-glass px-3 py-1.5 rounded-full text-[11px] text-zinc-300 hover:text-white border border-white/10 hover:border-cyan-500/40 transition-all flex items-center gap-2 shadow-2xl active:scale-95 cursor-pointer group"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isPitStop ? 'bg-amber-400 animate-ping' : 'bg-emerald-400 animate-pulse'
+              }`}
+            />
+            <span className="font-mono font-bold text-cyan-300 flex items-center gap-1">
+              <span>🏎️</span>
+              <span ref={speedPillRef}>0 km/h</span>
+            </span>
+            <span className="text-zinc-500">•</span>
+            <span
+              ref={gearPillRef}
+              className="font-mono text-yellow-400 font-bold"
+            >
+              N
+            </span>
+            <span className="text-zinc-500">•</span>
+            {/* Tire Compound Mini Badge */}
+            <span
+              className="w-2 h-2 rounded-full border border-black/40"
+              style={{ backgroundColor: currentTireObj.color }}
+              title={`Tire: ${currentTireObj.name}`}
+            />
+            <span className="text-zinc-500">•</span>
+            <span className="text-zinc-400 group-hover:text-cyan-300 flex items-center gap-1 font-mono text-[10px]">
+              <span>Telemetry</span>
+              {hudOpen ? (
+                <ChevronDown className="w-3 h-3" />
+              ) : (
+                <ChevronUp className="w-3 h-3" />
+              )}
+            </span>
+          </button>
+        </div>
       </div>
     </>
   );
