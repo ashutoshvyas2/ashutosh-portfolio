@@ -188,21 +188,15 @@ export default function LapPoolSimulator() {
 
       {/* Control Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10 relative z-10">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
             <Waves className="w-4 h-4 animate-pulse" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
-                25M OLYMPIC LAP POOL // LANE 4
-              </span>
-              <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-cyan-400 animate-ping' : 'bg-zinc-500'}`} />
-            </div>
-            <p className="text-[11px] text-zinc-400">
-              Interactive endurance training simulator • F1 companion parks when active
-            </p>
-          </div>
+          <span
+            className={`w-2 h-2 rounded-full ${
+              isPlaying ? 'bg-cyan-400 animate-ping shadow-[0_0_8px_#22d3ee]' : 'bg-zinc-600'
+            }`}
+          />
         </div>
 
         {/* Action Controls: Play / Reset / Minimize */}
