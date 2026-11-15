@@ -158,28 +158,28 @@ export default function F1Cursor() {
         className="fixed top-0 left-0 z-50 pointer-events-none select-none"
         style={{
           willChange: 'transform',
-          marginLeft: '-40px',
-          marginTop: '-21px',
+          marginLeft: '-15px',
+          marginTop: '-8px',
         }}
       >
         <div
           className="relative transition-transform duration-75"
           style={{
             transform: `rotate(${rotationRef.current}deg)`,
-            transformOrigin: '40px 21px',
+            transformOrigin: '15px 8px',
           }}
         >
           {/* ========================================================
-              PIT STOP BOX & PIT CREW (Appears when cursor rests)
+              PIT STOP BOX & PIT CREW (Scaled for 30px F1 Car)
              ======================================================== */}
           {isPitStop && (
-            <div className="absolute -inset-16 pointer-events-none">
+            <div className="absolute pointer-events-none inset-0">
               {/* Pit Box Yellow Border Floor Markings */}
-              <div className="absolute top-10 left-6 right-6 bottom-10 border-2 border-dashed border-yellow-400/50 rounded-lg animate-pulse" />
+              <div className="absolute -top-2 -bottom-2 -left-3 -right-3 border border-dashed border-yellow-400/60 rounded-md animate-pulse" />
               
               {/* Pit Stop LED Timing Board */}
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black/90 px-3 py-1 rounded-full border border-yellow-400/40 text-[10px] font-mono text-yellow-400 shadow-xl whitespace-nowrap flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+              <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black/95 px-2 py-0.5 rounded-full border border-yellow-400/40 text-[9px] font-mono text-yellow-400 shadow-xl whitespace-nowrap flex items-center gap-1.5 z-20">
+                <span className="w-1 h-1 rounded-full bg-red-500 animate-ping" />
                 <span>PIT: {pitTime}s</span>
                 <span className="text-zinc-400">•</span>
                 <span className={tiresFitted ? 'text-emerald-400 font-bold' : 'text-yellow-300'}>
@@ -188,60 +188,58 @@ export default function F1Cursor() {
               </div>
 
               {/* Front Jack Operator */}
-              <div className="absolute top-[29px] right-[2px] flex items-center">
-                <div className="w-4 h-4 rounded-full bg-cyan-500/80 border border-white/20 shadow-md flex items-center justify-center text-[7px] font-bold text-black animate-bounce">
+              <div className="absolute top-[2px] -right-3 flex items-center">
+                <div className="w-3 h-3 rounded-full bg-cyan-500/80 border border-white/20 shadow-md flex items-center justify-center text-[5px] font-bold text-black animate-bounce">
                   FJ
                 </div>
-                <div className="w-3 h-1 bg-zinc-400 rounded-sm" />
               </div>
 
               {/* Rear Jack Operator */}
-              <div className="absolute top-[29px] left-[4px] flex items-center flex-row-reverse">
-                <div className="w-4 h-4 rounded-full bg-cyan-500/80 border border-white/20 shadow-md flex items-center justify-center text-[7px] font-bold text-black animate-bounce">
+              <div className="absolute top-[2px] -left-3 flex items-center">
+                <div className="w-3 h-3 rounded-full bg-cyan-500/80 border border-white/20 shadow-md flex items-center justify-center text-[5px] font-bold text-black animate-bounce">
                   RJ
                 </div>
-                <div className="w-3 h-1 bg-zinc-400 rounded-sm" />
               </div>
 
               {/* 4 Tire Mechanics with Impact Wheel Guns & Sparks */}
-              <div className="absolute top-[6px] right-[24px] flex flex-col items-center animate-pulse">
-                <span className="text-[10px] animate-spin">⚡</span>
-                <div className="w-3.5 h-3.5 rounded-full bg-amber-500 border border-white/20 text-[6px] flex items-center justify-center font-bold text-black">
+              <div className="absolute -top-2.5 left-[19px] flex flex-col items-center animate-pulse">
+                <span className="text-[7px] animate-spin">⚡</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500 text-[5px] flex items-center justify-center font-bold text-black">
                   W
                 </div>
               </div>
 
-              <div className="absolute bottom-[6px] right-[24px] flex flex-col items-center animate-pulse">
-                <div className="w-3.5 h-3.5 rounded-full bg-amber-500 border border-white/20 text-[6px] flex items-center justify-center font-bold text-black">
+              <div className="absolute -bottom-2.5 left-[19px] flex flex-col items-center animate-pulse">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500 text-[5px] flex items-center justify-center font-bold text-black">
                   W
                 </div>
-                <span className="text-[10px] animate-spin">⚡</span>
+                <span className="text-[7px] animate-spin">⚡</span>
               </div>
 
-              <div className="absolute top-[4px] left-[26px] flex flex-col items-center animate-pulse">
-                <span className="text-[10px] animate-spin">⚡</span>
-                <div className="w-3.5 h-3.5 rounded-full bg-amber-500 border border-white/20 text-[6px] flex items-center justify-center font-bold text-black">
+              <div className="absolute -top-2.5 left-[4px] flex flex-col items-center animate-pulse">
+                <span className="text-[7px] animate-spin">⚡</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500 text-[5px] flex items-center justify-center font-bold text-black">
                   W
                 </div>
               </div>
 
-              <div className="absolute bottom-[4px] left-[26px] flex flex-col items-center animate-pulse">
-                <div className="w-3.5 h-3.5 rounded-full bg-amber-500 border border-white/20 text-[6px] flex items-center justify-center font-bold text-black">
+              <div className="absolute -bottom-2.5 left-[4px] flex flex-col items-center animate-pulse">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500 text-[5px] flex items-center justify-center font-bold text-black">
                   W
                 </div>
-                <span className="text-[10px] animate-spin">⚡</span>
+                <span className="text-[7px] animate-spin">⚡</span>
               </div>
             </div>
           )}
 
           {/* ========================================================
-              F1 CAR VECTOR (80px Precision Aerodynamic Top-Down View)
+              F1 CAR VECTOR (30px Precision Aerodynamic Top-Down View)
              ======================================================== */}
           <svg
-            width="80"
-            height="42"
+            width="30"
+            height="16"
             viewBox="0 0 76 40"
-            className={`overflow-visible filter drop-shadow-[0_4px_10px_rgba(6,182,212,0.45)] transition-transform ${
+            className={`overflow-visible filter drop-shadow-[0_2px_6px_rgba(6,182,212,0.45)] transition-transform ${
               isPitStop ? 'scale-105' : ''
             }`}
           >
@@ -373,9 +371,9 @@ export default function F1Cursor() {
 
           {/* Launch Wheelspin Smoke / Exhaust Boost */}
           {launchSmoke && (
-            <div className="absolute -left-6 top-1.5 flex items-center pointer-events-none animate-ping">
-              <span className="text-xs">💨</span>
-              <span className="text-xs text-cyan-400 font-bold font-mono">GO!</span>
+            <div className="absolute -left-4 top-0 flex items-center pointer-events-none animate-ping">
+              <span className="text-[10px]">💨</span>
+              <span className="text-[9px] text-cyan-400 font-bold font-mono">GO!</span>
             </div>
           )}
         </div>
