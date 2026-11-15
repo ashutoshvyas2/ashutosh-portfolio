@@ -94,6 +94,8 @@ export default function F1Cursor() {
   const [launchSmoke, setLaunchSmoke] = useState(false);
   const [steerAngle, setSteerAngle] = useState(0);
   const [isDrsOpen, setIsDrsOpen] = useState(false);
+  const [isSuppressed, setIsSuppressed] = useState(false);
+  const suppressedRef = useRef(false);
 
   // High-frequency telemetry refs (Direct DOM updates for 60/120 FPS zero-jank)
   const speedTextRef = useRef(null);
@@ -126,6 +128,18 @@ export default function F1Cursor() {
   useEffect(() => {
     const unsubscribe = subscribeSound((val) => setSoundOn(val));
     return unsubscribe;
+  }, []);
+
+  // Listen for F1 suppression events (e.g., when the Lap Pool Simulator is playing)
+  useEffect(() => {
+    const handleSuppress = (e) => {
+      const val = Boolean(e.detail?.suppress);
+      suppressedRef.current = val;
+      setIsSuppressed(val);
+    };
+
+    window.addEventListener('f1-suppress', handleSuppress);
+    return () => window.removeEventListener('f1-suppress', handleSuppress);
   }, []);
 
   // Keep tireRef up to date with selected tire
@@ -168,6 +182,20 @@ export default function F1Cursor() {
     let currentRotation = 0;
 
     const loop = () => {
+      // If F1 companion is suppressed (e.g. Lap Pool Simulator actively running)
+      if (suppressedRef.current) {
+        if (containerRef.current) {
+          containerRef.current.style.opacity = '0';
+          containerRef.current.style.pointerEvents = 'none';
+        }
+        animFrameRef.current = requestAnimationFrame(loop);
+        return;
+      } else {
+        if (containerRef.current && containerRef.current.style.opacity === '0') {
+          containerRef.current.style.opacity = '1';
+        }
+      }
+
       const now = Date.now();
       const timeSinceMove = now - lastMoveTimeRef.current;
 
@@ -374,7 +402,9 @@ export default function F1Cursor() {
       <div
         ref={containerRef}
         aria-hidden="true"
-        className="fixed top-0 left-0 z-50 pointer-events-none select-none"
+        className={`fixed top-0 left-0 z-50 pointer-events-none select-none transition-all duration-300 ${
+          isSuppressed ? 'opacity-0 scale-75' : 'opacity-100 scale-100'
+        }`}
         style={{
           willChange: 'transform',
           marginLeft: '-15px',
@@ -800,46 +830,58 @@ export default function F1Cursor() {
 
         {/* COMPACT DOCK PILL (Always visible when companion is enabled) */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              playTactileClick();
-              setHudOpen(!hudOpen);
-            }}
-            className="apple-glass px-3 py-1.5 rounded-full text-[11px] text-zinc-300 hover:text-white border border-white/10 hover:border-cyan-500/40 transition-all flex items-center gap-2 shadow-2xl active:scale-95 cursor-pointer group"
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                isPitStop ? 'bg-amber-400 animate-ping' : 'bg-emerald-400 animate-pulse'
-              }`}
-            />
-            <span className="font-mono font-bold text-cyan-300 flex items-center gap-1">
-              <span>🏎️</span>
-              <span ref={speedPillRef}>0 km/h</span>
-            </span>
-            <span className="text-zinc-500">•</span>
-            <span
-              ref={gearPillRef}
-              className="font-mono text-yellow-400 font-bold"
+          {isSuppressed ? (
+            <div className="apple-glass px-3.5 py-1.5 rounded-full text-[11px] text-cyan-300 border border-cyan-500/40 shadow-xl flex items-center gap-2 animate-in fade-in duration-200">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
+              <span className="font-mono font-bold flex items-center gap-1.5 text-white">
+                <span>🏊</span>
+                <span>Lap Pool Active</span>
+              </span>
+              <span className="text-zinc-500">•</span>
+              <span className="text-[10px] font-mono text-zinc-400">🏎️ Car Docked</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                playTactileClick();
+                setHudOpen(!hudOpen);
+              }}
+              className="apple-glass px-3 py-1.5 rounded-full text-[11px] text-zinc-300 hover:text-white border border-white/10 hover:border-cyan-500/40 transition-all flex items-center gap-2 shadow-2xl active:scale-95 cursor-pointer group"
             >
-              N
-            </span>
-            <span className="text-zinc-500">•</span>
-            {/* Tire Compound Mini Badge */}
-            <span
-              className="w-2 h-2 rounded-full border border-black/40"
-              style={{ backgroundColor: currentTireObj.color }}
-              title={`Tire: ${currentTireObj.name}`}
-            />
-            <span className="text-zinc-500">•</span>
-            <span className="text-zinc-400 group-hover:text-cyan-300 flex items-center gap-1 font-mono text-[10px]">
-              <span>Telemetry</span>
-              {hudOpen ? (
-                <ChevronDown className="w-3 h-3" />
-              ) : (
-                <ChevronUp className="w-3 h-3" />
-              )}
-            </span>
-          </button>
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isPitStop ? 'bg-amber-400 animate-ping' : 'bg-emerald-400 animate-pulse'
+                }`}
+              />
+              <span className="font-mono font-bold text-cyan-300 flex items-center gap-1">
+                <span>🏎️</span>
+                <span ref={speedPillRef}>0 km/h</span>
+              </span>
+              <span className="text-zinc-500">•</span>
+              <span
+                ref={gearPillRef}
+                className="font-mono text-yellow-400 font-bold"
+              >
+                N
+              </span>
+              <span className="text-zinc-500">•</span>
+              {/* Tire Compound Mini Badge */}
+              <span
+                className="w-2 h-2 rounded-full border border-black/40"
+                style={{ backgroundColor: currentTireObj.color }}
+                title={`Tire: ${currentTireObj.name}`}
+              />
+              <span className="text-zinc-500">•</span>
+              <span className="text-zinc-400 group-hover:text-cyan-300 flex items-center gap-1 font-mono text-[10px]">
+                <span>Telemetry</span>
+                {hudOpen ? (
+                  <ChevronDown className="w-3 h-3" />
+                ) : (
+                  <ChevronUp className="w-3 h-3" />
+                )}
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </>

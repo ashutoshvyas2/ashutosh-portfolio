@@ -204,3 +204,30 @@ export function playTireRatchet() {
     osc.stop(startTime + 0.02);
   });
 }
+
+/**
+ * Gentle water splash / flip-turn sound for the Lap Pool Simulator
+ */
+export function playWaterSplash() {
+  if (!soundEnabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(320, now);
+  osc.frequency.exponentialRampToValueAtTime(140, now + 0.09);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.linearRampToValueAtTime(0.045, now + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.09);
+}

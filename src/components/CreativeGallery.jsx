@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Camera, Waves, Globe2, Sparkles, Sliders, Aperture, Eye } from 'lucide-react';
 import { hobbies } from '../data/portfolioData';
 import { playTactileClick } from '../utils/soundEffects';
+import LapPoolSimulator from './LapPoolSimulator';
 
 export default function CreativeGallery() {
   const [activeFilter, setActiveFilter] = useState('natural');
@@ -179,6 +180,9 @@ export default function CreativeGallery() {
           </div>
         ))}
       </div>
+
+      {/* Mini 25-Meter Olympic Lap Pool Simulator */}
+      <LapPoolSimulator />
     </section>
   );
 }
