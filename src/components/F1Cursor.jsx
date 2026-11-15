@@ -381,22 +381,22 @@ export default function F1Cursor() {
         </div>
       </div>
 
-      {/* Companion Telemetry Control Pill (Bottom-Left Corner) */}
+      {/* Playful F1 Easter Egg Toggle Pill (Bottom-Left Corner) */}
       <div className="fixed bottom-4 left-4 z-40 hidden sm:block">
         <button
           onClick={() => setEnabled(!enabled)}
-          title={enabled ? "Disable F1 Cursor" : "Enable F1 Cursor"}
-          className="apple-glass px-3 py-1.5 rounded-full text-[10px] text-zinc-300 hover:text-white border border-white/10 hover:border-cyan-500/30 transition-all flex items-center gap-2 shadow-2xl active:scale-95 cursor-pointer font-mono"
+          title={enabled ? "Hide F1 Easter Egg" : "Enable F1 Easter Egg"}
+          className="apple-glass px-3 py-1.5 rounded-full text-[11px] text-zinc-300 hover:text-white border border-white/10 hover:border-cyan-500/30 transition-all flex items-center gap-2 shadow-2xl active:scale-95 cursor-pointer"
         >
           <span className={`w-2 h-2 rounded-full ${enabled ? (isPitStop ? 'bg-amber-400 animate-ping' : 'bg-emerald-400 animate-pulse') : 'bg-zinc-600'}`} />
           <span>
             {enabled
               ? isPitStop
-                ? `🏎️ PIT BOX (${pitTime}s)`
+                ? `🏎️ Pit Crew at Work (${pitTime}s)`
                 : isDrsOpen
-                ? '🏎️ F1: DRS OPEN ⚡'
-                : '🏎️ F1 TELEMETRY: RACING'
-              : '🏎️ F1: OFF'}
+                ? '🏎️ DRS Open ⚡'
+                : '🏎️ F1 Easter Egg: On'
+              : '🏎️ F1 Easter Egg: Off'}
           </span>
         </button>
       </div>

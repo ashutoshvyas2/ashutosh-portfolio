@@ -16,13 +16,13 @@ export default function Navbar({ onOpenResume, activeTab = 'overview', onSelectT
   }, []);
 
   const navLinks = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'innovations', label: 'Innovations' },
-    { id: 'prototypes', label: 'Prototypes' },
+    { id: 'overview', label: 'About Me' },
+    { id: 'innovations', label: 'Featured Work' },
+    { id: 'prototypes', label: 'Projects' },
     { id: 'experience', label: 'Experience' },
-    { id: 'specs', label: 'Tech Specs' },
-    { id: 'gallery', label: 'Creative' },
-    { id: 'contact', label: 'Connect' },
+    { id: 'specs', label: 'Skills & Tools' },
+    { id: 'gallery', label: 'Life Outside Code' },
+    { id: 'contact', label: 'Get in Touch' },
   ];
 
   const handleNavClick = (id) => {

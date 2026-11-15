@@ -20,13 +20,13 @@ export default function ExperienceTimeline() {
       <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold uppercase tracking-wider">
           <Briefcase className="w-3.5 h-3.5" />
-          Professional Track Record
+          Work Experience
         </div>
         <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
-          Experience & Impact
+          Where I've worked & grown.
         </h2>
         <p className="text-zinc-400 text-base sm:text-lg">
-          Proven contributions across software development, financial analysis, operational leadership, and digital growth.
+          Practical experience across live software engineering, financial research, and community education initiatives.
         </p>
       </div>
 

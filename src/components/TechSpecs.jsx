@@ -43,20 +43,21 @@ export default function TechSpecs() {
 
   return (
     <section id="specs" className="py-24 px-4 sm:px-6 max-w-6xl mx-auto">
-      {/* Apple-style Tech Specs Section Header */}
+      {/* Section Header */}
       <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
           <Cpu className="w-3.5 h-3.5" />
-          Technical Specifications
+          Skills & Toolkit
         </div>
         <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
-          System Capabilities
+          Technologies I use to build.
         </h2>
         <p className="text-zinc-400 text-base sm:text-lg">
-          Exhaustive spec sheet detailing software engineering technologies, analytical proficiencies, and operational tooling.
+          The languages, frameworks, databases, and analytical tools I rely on to turn concepts into reliable software.
         </p>
+      </div>
 
-        {/* Filter and Search Bar */}
+      {/* Filter and Search Bar */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto">
           {/* Search Input */}
           <div className="relative w-full sm:w-72">
@@ -87,7 +88,6 @@ export default function TechSpecs() {
             ))}
           </div>
         </div>
-      </div>
 
       {/* Spec Matrix Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

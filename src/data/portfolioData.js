@@ -1,18 +1,18 @@
 export const personalInfo = {
   name: "Ashutosh Gautam",
   role: "Full-Stack Developer & Financial Data Analyst",
-  subheading: "Computer Applications Scholar (BCA) passionate about engineering scalable, responsive full-stack web architectures (MERN Stack Core), consumer-facing prototypes, and translating complex market data into actionable intelligence.",
+  subheading: "Building clean, fast web applications and translating financial market data into intuitive, human-centered experiences.",
   location: "West Bengal, India",
   email: "vyasashutosh551@gmail.com",
   phone: "+91 8482084419",
   phoneDisplay: "+91 84820 84419",
-  status: "Available for Full-Stack Engineering & Analyst Roles",
-  about: `An extremely driven Computer Application student seeking entry-level opportunities to apply rigorous academic knowledge and foundational technical skills in high-impact professional settings. Combining robust full-stack software development (MERN stack core, Next.js, TypeScript) with analytical financial research, active consumer-utility prototyping, and a disciplined work ethic with rapid adaptability.`,
+  status: "Open to Full-Stack Engineering & Analyst Roles",
+  about: `I'm a full-stack developer (MERN) and data analyst based in West Bengal, India. I love building things that live on the internet — from practical tools that save people money on groceries to interactive financial dashboards. When I'm not writing code or analyzing market charts, you'll find me behind a camera lens capturing quiet street scenes in Kolkata or practicing Italian.`,
   languages: [
     { name: "English", level: "Fluent / Professional" },
     { name: "Hindi", level: "Native / Bilingual" },
     { name: "Bengali", level: "Working Proficiency" },
-    { name: "Italian", level: "Beginner / Elementary (A1)" }
+    { name: "Italian", level: "Elementary (A1)" }
   ]
 };
 
@@ -27,125 +27,122 @@ export const prototypes = [
   {
     id: "quickscan",
     title: "QuickScan",
-    tagline: "Real-Time Quick-Commerce Basket & Price Comparator",
+    tagline: "Compare grocery prices across Blinkit, Zepto & Instamart in real time",
     category: "Consumer Utility",
-    status: "Prototype Ready • Functional MVP",
+    status: "Functional Prototype",
     statusColor: "emerald",
     icon: "Zap",
-    problem: "Eliminates the friction of toggling across 4+ quick-commerce apps by providing live basket-cost, delivery time, and pricing comparisons across Blinkit, Zepto, Swiggy Instamart, and BB Now for 150+ daily groceries and household medicines.",
+    problem: "I got tired of switching between 4 different quick-commerce apps just to find out which one had groceries cheaper and faster in my area. So I built QuickScan to pull live basket totals and delivery estimates into one clean view.",
     highlights: [
-      "Aggregates 150+ live products with dynamic multi-platform REST adapters.",
-      "Instant basket-cost calculation revealing the cheapest and fastest platform per order.",
-      "Location-aware pricing heuristics and responsive mobile-first interface."
+      "Compares real-time basket totals across Blinkit, Zepto, Swiggy Instamart, and BB Now.",
+      "Instant calculator showing you the cheapest and fastest platform per order.",
+      "Clean, mobile-first interface designed for quick everyday shopping."
     ],
-    tech: ["React 18", "Vite", "Tailwind CSS", "Node.js", "Express.js", "REST Adapters"],
-    metrics: { primary: "150+", label: "Indexed Products", secondary: "4 Platforms", secLabel: "Blinkit, Zepto, Instamart, BB Now" }
+    tech: ["React 19", "Vite", "Tailwind CSS", "Node.js", "Express.js", "REST APIs"],
+    metrics: { primary: "150+", label: "Indexed Products", secondary: "4 Apps", secLabel: "Blinkit, Zepto, Instamart, BB Now" }
   },
   {
     id: "subtrap",
     title: "SubTrap",
-    tagline: "Proactive Subscription Protection & Chrome Extension",
-    category: "Security & Productivity",
-    status: "Production-Ready MVP • Store Listing Ready",
+    tagline: "Kill unwanted free-trial charges before your card gets billed",
+    category: "Productivity & Security",
+    status: "Functional MVP",
     statusColor: "blue",
     icon: "ShieldAlert",
-    problem: "Cures 'free-trial amnesia' and prevents accidental recurring credit card debits. Automatically parses trial confirmations, triggers 1-click Google Calendar kill-switch reminders, provides direct links to buried cancellation pages with dark-pattern bypass guides, and tracks avoided charges on an annual savings dashboard.",
+    problem: "Free trial amnesia is real — we've all signed up for a trial, forgotten about it, and gotten hit with an unexpected recurring charge a week later. SubTrap gives you a 1-click Google Calendar reminder, direct links to buried cancellation pages, and guides to bypass sneaky retention traps.",
     highlights: [
-      "Dual-target deployment: Standalone Web App + Chrome Extension (Manifest V3).",
-      "Automated RFC 5545 iCalendar (`.ics`) generation & Google Calendar Action Templates.",
-      "Dark-pattern bypass blueprints guiding users past retention traps to cancel effortlessly.",
-      "Verified Indian subscription pricing matrix and annual savings calculator."
+      "1-click Google Calendar kill-switch reminders automatically added to your schedule.",
+      "Direct shortcuts to cancel accounts without getting trapped in retention loops.",
+      "Annual savings tracker celebrating money kept in your pocket."
     ],
-    tech: ["React 18", "Vite", "Tailwind CSS", "Manifest V3", "Google Calendar API", "RFC 5545 (.ics)", "Canvas Confetti"],
-    metrics: { primary: "100%", label: "Trial Protection", secondary: "0 Jitter", secLabel: "1-Click Calendar Kill-Switch" }
+    tech: ["React 19", "Vite", "Tailwind CSS", "Manifest V3", "Google Calendar API", "RFC 5545 (.ics)"],
+    metrics: { primary: "100%", label: "Trial Protection", secondary: "1-Click", secLabel: "Calendar Kill-Switch" }
   },
   {
     id: "pantrypanic",
     title: "PantryPanic",
-    tagline: "Anti-Food-Waste Emergency Recipe Rescue Engine",
-    category: "Sustainability & Health",
-    status: "Prototype Ready • Functional MVP",
+    tagline: "Turn expiring fridge ingredients into quick 10-minute meals",
+    category: "Cooking & Sustainability",
+    status: "Functional MVP",
     statusColor: "amber",
     icon: "UtensilsCrossed",
-    problem: "Transforms expiring fridge ingredients into rapid 10-minute, single-pan rescue meals before food spoils—preventing household waste and curbing expensive, impulsive late-night food deliveries (Swiggy/Zomato/DoorDash).",
+    problem: "Food waste happens when you forget what's sitting in the back of your fridge. PantryPanic lets you select ingredients you already have and immediately suggests 10-minute, single-pan rescue recipes before anything goes bad.",
     highlights: [
-      "Algorithmic recipe matching powered by the Spoonacular Recipe API.",
-      "Custom multi-ingredient selector prioritizing perishable groceries.",
-      "Interactive 10-minute audio-assisted kitchen timer with Web Audio API chime.",
-      "Estimated takeout money-saved counter celebrating sustainable home cooking."
+      "Instant recipe suggestions based purely on ingredients you already have at home.",
+      "Prioritizes single-pan, 10-minute quick recipes with minimal kitchen cleanup.",
+      "Built-in interactive cooking timer with audio alerts."
     ],
-    tech: ["Next.js 14 (App Router)", "React 18", "TypeScript", "Tailwind CSS", "Spoonacular API", "Web Audio API"],
+    tech: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "Spoonacular API", "Web Audio"],
     metrics: { primary: "10 Min", label: "Rescue Cook Time", secondary: "Single-Pan", secLabel: "Zero Sink Mess" }
   },
   {
     id: "groupprojectguard",
     title: "GroupProjectGuard",
-    tagline: "Micro-Task Accountability & Fair Credit Grading Dashboard",
-    category: "EdTech & Collaboration",
-    status: "MVP Complete • Classroom Pilot Ready",
+    tagline: "Fair credit and accountability for college group projects",
+    category: "Collaboration & EdTech",
+    status: "Classroom Ready",
     statusColor: "purple",
-    icon: "UsersCheck",
-    problem: "Eliminates unfair credit distribution in university and school group assignments—where one student carries 90% of the workload at 3 AM while others vanish. Tracks weighted deliverables with verifiable evidence links, logs late-night effort multipliers, and generates professor-ready fair grade recalculation audits.",
+    icon: "UserCheck",
+    problem: "Every student knows the pain of doing 90% of a group project while teammates vanish. GroupProjectGuard logs real task contributions, links proof of work, and generates a transparent breakdown so grades reflect who actually built the project.",
     highlights: [
-      "Verifiable proof-of-work logger with commit/doc links and timestamp validation.",
-      "Late-night effort bonus weighting to reward deadline-crunch contributors fairly.",
-      "Dynamic visual contribution pie charts and comparative equity distributions.",
-      "Exportable professor-ready fair grading report backed by verifiable peer audit logs."
+      "Transparent task log with proof-of-work links, documents, and timestamps.",
+      "Visual equity breakdown showing true team workload distribution.",
+      "Exportable summary ready to share with professors or teammates."
     ],
-    tech: ["React 19", "TypeScript", "Vite", "Tailwind CSS v4", "Chart.js", "react-chartjs-2", "LocalStorage Engine"],
-    metrics: { primary: "90/10", label: "Workload Audit", secondary: "1-Click", secLabel: "Professor Grade Report" }
+    tech: ["React 19", "TypeScript", "Vite", "Tailwind CSS", "Chart.js", "LocalStorage"],
+    metrics: { primary: "90/10", label: "Workload Audit", secondary: "1-Click", secLabel: "Fair Grade Report" }
   }
 ];
 
 export const technicalSkills = [
   {
-    category: "Full-Stack Development",
+    category: "Full-Stack Web Development",
     icon: "Code2",
-    description: "End-to-end modern web applications with scalable architecture",
+    description: "Building responsive, modern applications from front to back",
     skills: [
       { name: "React.js / Next.js", level: "Advanced", tag: "Frontend" },
       { name: "Node.js & Express", level: "Intermediate", tag: "Backend" },
       { name: "MongoDB (MERN)", level: "Intermediate", tag: "Database" },
       { name: "TypeScript", level: "Proficient", tag: "Typed JS" },
       { name: "JavaScript (ES6+)", level: "Advanced", tag: "Core" },
-      { name: "Python", level: "Intermediate", tag: "Scripting / Data" },
-      { name: "HTML5 / CSS3 / Tailwind", level: "Advanced", tag: "Structure & Style" }
+      { name: "Python", level: "Intermediate", tag: "Data & Scripts" },
+      { name: "Tailwind CSS", level: "Advanced", tag: "Styling" }
     ]
   },
   {
-    category: "Engineering & Optimization",
+    category: "Performance & Quality",
     icon: "Cpu",
-    description: "Quality assurance, site speed, and structured debugging",
+    description: "Writing clean code that loads fast and looks polished",
     skills: [
-      { name: "Application Testing", level: "Skilled", tag: "QA" },
-      { name: "Debugger & DevTools", level: "Advanced", tag: "Diagnostics" },
-      { name: "Website Optimization", level: "Advanced", tag: "Performance" },
-      { name: "SEO Architecture", level: "Skilled", tag: "Search / CWV" },
-      { name: "Responsive UI Design", level: "Advanced", tag: "Mobile-First" }
+      { name: "Structured Debugging", level: "Advanced", tag: "Diagnostics" },
+      { name: "Chrome DevTools", level: "Advanced", tag: "Profiling" },
+      { name: "Web Performance (CWV)", level: "Advanced", tag: "Speed" },
+      { name: "Responsive Design", level: "Advanced", tag: "Mobile-First" },
+      { name: "RESTful API Design", level: "Proficient", tag: "APIs" }
     ]
   },
   {
     category: "Financial & Data Analytics",
     icon: "TrendingUp",
-    description: "Market fundamentals, macro indicators, and spreadsheet modeling",
+    description: "Market fundamentals, macro indicators, and financial modeling",
     skills: [
-      { name: "Financial Market Analysis", level: "Proficient", tag: "Equity" },
+      { name: "Stock Market Analysis", level: "Proficient", tag: "Equity" },
       { name: "Company Fundamentals", level: "Proficient", tag: "Valuation" },
       { name: "Macroeconomic Tracking", level: "Skilled", tag: "Global Trends" },
       { name: "Data Analysis", level: "Proficient", tag: "Insights" },
-      { name: "Advanced Excel", level: "Advanced", tag: "Formulas & Pivot" }
+      { name: "Advanced Excel", level: "Advanced", tag: "Modeling" }
     ]
   },
   {
-    category: "Growth & Operations",
+    category: "Outreach & Operations",
     icon: "Briefcase",
-    description: "Digital outreach, lead engines, and institutional management",
+    description: "Campaign strategies, workflow management, and communication",
     skills: [
       { name: "Email Marketing Suites", level: "Advanced", tag: "Campaigns" },
       { name: "Lead Generation", level: "Proficient", tag: "Growth" },
-      { name: "Corporate Networking", level: "Skilled", tag: "B2B Outreach" },
+      { name: "Professional Writing", level: "Proficient", tag: "Communication" },
       { name: "Operations Management", level: "Proficient", tag: "Workflow" },
-      { name: "Professional Typing", level: "Fast & Accurate", tag: "Execution" }
+      { name: "Touch Typing", level: "Fast & Accurate", tag: "Execution" }
     ]
   }
 ];
@@ -159,11 +156,11 @@ export const experiences = [
     location: "Remote",
     badge: "Financial Intelligence",
     type: "Internship",
-    description: "Conducted deep dives into stock market dynamics, macroeconomic trends, and company fundamentals to produce institutional executive reports.",
+    description: "Conducted fundamental equity analysis, company balance sheet audits, and weekly market digests for senior leadership.",
     highlights: [
-      "Conducted deep dives into stock market trends, analyzed company fundamentals, and tracked macroeconomic indicators influencing global markets.",
-      "Compiled weekly analytical insights and reported market dynamics, core financial news developments, and global economic movements.",
-      "Assisted in preparing periodic financial data analyses and internal review presentations for senior leadership."
+      "Tracked global stock market indices, interest rate movements, and key macroeconomic trends.",
+      "Analyzed company financial statements, P/E ratios, and return on equity (ROE) for valuation reports.",
+      "Synthesized market news and industry shifts into weekly executive review presentations."
     ],
     tech: ["Financial Market Analysis", "Company Fundamentals", "Macroeconomics", "Advanced Excel", "Data Presentation"]
   },
@@ -175,11 +172,11 @@ export const experiences = [
     location: "Navi Mumbai, Maharashtra",
     badge: "Core Software Engineering",
     type: "Internship",
-    description: "Architected and delivered scalable MERN stack components for live production web systems and enterprise corporate applications.",
+    description: "Worked on live production web apps, building React frontends, Express APIs, and MongoDB database models.",
     highlights: [
-      "Gained hands-on experience with MERN stack technologies (MongoDB, Express.js, React, Node.js) to build scalable, high-performance web architecture.",
-      "Successfully implemented core conceptual learnings into live production websites and corporate applications.",
-      "Collaborated on API integrations, state management routines, and component modularity to ensure seamless user experience."
+      "Built and deployed live production web features using React, Node.js, Express, and MongoDB.",
+      "Connected REST APIs with client components, handling input validation and fluid state management.",
+      "Tested and debugged layouts across desktop and mobile browsers to ensure smooth, responsive performance."
     ],
     tech: ["React.js", "Node.js", "Express.js", "MongoDB", "JavaScript", "HTML/CSS", "REST APIs"]
   },
@@ -191,11 +188,11 @@ export const experiences = [
     location: "Remote",
     badge: "Social Impact & Ops",
     type: "Internship",
-    description: "Engineered structured educational curricula for underprivileged students and managed corporate operational intelligence spreadsheets.",
+    description: "Created educational modules for underprivileged students and managed operational intelligence spreadsheets.",
     highlights: [
-      "Acquired comprehensively deep domain insights regarding core corporate management framework structures.",
-      "Designed and executed structured educational curriculums to teach underprivileged students across partnered NGOs.",
-      "Maintained precise operational spreadsheets and spearheaded internal research-driven analytical projects."
+      "Designed practical learning curricula and taught underprivileged students across partner NGOs.",
+      "Organized operational data in structured spreadsheets to streamline volunteer workflows.",
+      "Collaborated with team leads to research and expand community outreach initiatives."
     ],
     tech: ["Corporate Management", "Curriculum Design", "Operational Spreadsheets", "NGO Partnerships", "Analytical Research"]
   },
@@ -207,11 +204,11 @@ export const experiences = [
     location: "Remote",
     badge: "Award Winner • Top Intern",
     type: "Internship",
-    description: "Awarded top-performing corporate intern of the month for high-yield outreach execution and enterprise lead generation.",
+    description: "Awarded Intern of the Month for fast delivery and designing high-converting outreach pipelines.",
     highlights: [
-      "Recognized officially as one of the top-performing corporate interns of the month for exemplary delivery execution.",
-      "Strategized target-driven outreach campaigns using sophisticated professional email marketing suites.",
-      "Studied corporate lead generation networks and enterprise digital networking models."
+      "Recognized as the top-performing intern of the month for high execution speed and delivery quality.",
+      "Designed automated corporate outreach campaigns using modern email marketing tools.",
+      "Analyzed engagement metrics to improve response rates and lead generation."
     ],
     tech: ["Email Marketing", "Lead Generation", "Enterprise Networking", "Campaign Strategy", "Performance Optimization"]
   },
@@ -221,16 +218,15 @@ export const experiences = [
     company: "Adamas University",
     period: "2023 – 2026",
     location: "Kolkata, West Bengal",
-    badge: "Institutional Leadership",
+    badge: "Campus Leadership",
     type: "Volunteering",
-    description: "Coordinated university-wide logistics, high-stakes institutional conferences, and managed confidential regulatory portfolios.",
+    description: "Organized department conferences, student logistics, and academic documentation.",
     highlights: [
-      "Managed complex organizational timelines, master calendars, and structured institutional schedules.",
-      "Coordinated logistics to smoothly schedule executive assemblies, institutional meetings, and academic conferences.",
-      "Prepared and distributed formalized meeting agendas, institutional minutes, and relevant documentation portfolios.",
-      "Handled highly confidential files and institutional materials with complete regulatory discretion and structural organization."
+      "Coordinated scheduling and logistics for academic seminars and campus events.",
+      "Prepared agendas, documented meeting summaries, and distributed materials to faculty and students.",
+      "Managed records with high attention to detail, reliability, and confidentiality."
     ],
-    tech: ["Executive Scheduling", "Event Logistics", "Documentation Portfolios", "Confidential Records Management"]
+    tech: ["Executive Scheduling", "Event Logistics", "Documentation", "Team Coordination"]
   }
 ];
 
@@ -241,7 +237,7 @@ export const education = [
     location: "Kolkata, West Bengal",
     period: "2023 – 2027 (Expected)",
     badge: "Undergraduate Degree",
-    details: "Rigorous computer science and software development curriculum spanning data structures, database architecture, web technologies, software engineering, and computer networks."
+    details: "Focusing on software development, data structures, web architecture, database design, and computer networks."
   },
   {
     degree: "Higher Secondary (Class XII) & Secondary (Class X)",
@@ -249,33 +245,33 @@ export const education = [
     location: "Howrah, West Bengal",
     period: "Completed 2023",
     badge: "Foundational Schooling",
-    details: "Strong foundational academic track record emphasizing mathematical reasoning, analytical sciences, and foundational digital literacy."
+    details: "Foundational schooling emphasizing mathematics, science, and computer applications."
   }
 ];
 
 export const hobbies = [
   {
     title: "Creative Photography",
-    tagline: "Framing Light, Shadow & Perspective",
-    description: "Exploring composition, dynamic range, and candid moments. A keen eye for visual balance that translates directly into aesthetic UI craft.",
+    tagline: "Framing Light, Shadow & Everyday Life",
+    description: "Capturing quiet candid moments at railway stations, mountain sunsets, and beach shorelines. Photography trains my eye for composition, visual balance, and detail — which directly influences how I design user interfaces.",
     icon: "Camera",
     accent: "from-amber-500/20 to-orange-500/20",
-    tags: ["Composition", "Street / Macro", "Lighting Balance"]
+    tags: ["Composition", "Street Scenes", "Natural Light"]
   },
   {
-    title: "Endurance Swimming",
-    tagline: "Focus, Rhythm & Discipline",
-    description: "Competitive lap swimming reinforcing physical endurance, disciplined routines, and sustained mental focus.",
+    title: "Endurance & Swimming",
+    tagline: "Rhythm, Focus & Daily Discipline",
+    description: "Lap swimming and running help me reset, maintain high energy, and build mental endurance for long problem-solving sessions.",
     icon: "Waves",
     accent: "from-cyan-500/20 to-blue-500/20",
-    tags: ["Cardio Stamina", "Daily Discipline", "Mental Resilience"]
+    tags: ["Stamina", "Daily Routine", "Mental Clarity"]
   },
   {
-    title: "Secondary Language Learning",
-    tagline: "Polyglot Exploration & Cultural Nuance",
-    description: "Actively studying linguistic structures and multi-lingual communication across English, Hindi, Bengali, and Italian.",
+    title: "Language Learning",
+    tagline: "Exploring Culture & Italian (A1)",
+    description: "I enjoy exploring linguistics across English, Hindi, Bengali, and Italian. Studying a new language exercises the same pattern-recognition muscles as learning a new programming framework.",
     icon: "Globe2",
     accent: "from-violet-500/20 to-purple-500/20",
-    tags: ["Cognitive Agility", "Cultural Nuance", "Italian (Beginner)"]
+    tags: ["Italian (A1)", "Multilingual", "Cultural Curiosity"]
   }
 ];

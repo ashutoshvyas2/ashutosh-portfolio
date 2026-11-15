@@ -46,13 +46,13 @@ export default function CreativeGallery() {
       <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
           <Camera className="w-3.5 h-3.5" />
-          Perspective & Creative Eye
+          Life Outside Code
         </div>
         <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
-          Beyond the Code
+          Perspective & everyday moments.
         </h2>
         <p className="text-zinc-400 text-base sm:text-lg">
-          How creative photography, endurance athletics, and cross-cultural curiosity shape a sharper design sensibility and disciplined engineering mindset.
+          When I step away from the monitor, I take my camera out for walks across Kolkata and Mumbai, train for endurance swimming, and study languages.
         </p>
       </div>
 

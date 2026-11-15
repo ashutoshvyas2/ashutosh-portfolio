@@ -61,13 +61,13 @@ export default function ContactSection() {
       <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
           <MessageSquare className="w-3.5 h-3.5" />
-          Direct Dispatch
+          Get in Touch
         </div>
         <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
-          Let's Build Something Exceptional.
+          Let's talk.
         </h2>
         <p className="text-zinc-400 text-base sm:text-lg">
-          Currently open to full-stack engineering roles, financial analytics positions, and visionary product collaborations.
+          Whether you have an internship or full-time opportunity, a project idea, or just want to chat about code, markets, or photography — my inbox is always open.
         </p>
       </div>
 

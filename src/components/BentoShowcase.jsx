@@ -33,13 +33,13 @@ export default function BentoShowcase() {
       <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5" />
-          The Bento Grid
+          Featured Work & Experience
         </div>
         <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
-          Engineered across disciplines.
+          Real-world work & team impact.
         </h2>
         <p className="text-zinc-400 text-base sm:text-lg">
-          A modular overview of verified production software, financial market intelligence, and organizational impact.
+          A look at the production software, financial research, and community initiatives I've contributed to across four internships.
         </p>
       </div>
 
@@ -722,25 +722,25 @@ export default function BentoShowcase() {
 
           <div className="space-y-2 z-10 max-w-xl">
             <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wider text-cyan-400 font-semibold flex items-center gap-1.5 font-mono">
-                <Gauge className="w-4 h-4" />
-                Performance Specs
+              <span className="text-xs uppercase tracking-wider text-cyan-400 font-semibold flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" />
+                Engineering Philosophy
               </span>
               <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono">
-                100 / 100 Score
+                Clean & Fast
               </span>
             </div>
 
             <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Zero-Jank Web Vitals & Production Performance
+              Crafted with care. Fast, responsive, and accessible.
             </h3>
             <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
-              Built adhering strictly to modern web standards: compositor thread animations, reduced-motion accessibility, native CSS scroll timelines, and semantic structure.
+              I believe the best software feels effortless — instant page loads, intuitive typography, and smooth micro-interactions that respect the user's time and device.
             </p>
 
             <div className="pt-1 flex items-center gap-2 text-[11px] text-zinc-500 font-mono">
               <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-              <span>WCAG 2.2 Level AA Compliant • Modern Web Guidelines</span>
+              <span>Semantic HTML • Accessible Contrast (WCAG 2.2 AA) • Responsive Layouts</span>
             </div>
           </div>
 
