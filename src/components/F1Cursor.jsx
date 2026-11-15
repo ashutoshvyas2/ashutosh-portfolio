@@ -9,8 +9,17 @@ import {
   Power, 
   RotateCcw,
   Flag,
-  Crosshair
+  Crosshair,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
+import { 
+  playTireRatchet, 
+  playTactileClick, 
+  isSoundEnabled, 
+  toggleSound, 
+  subscribeSound 
+} from '../utils/soundEffects';
 
 /**
  * Formula 1 Tire Compound Configurations
@@ -76,6 +85,7 @@ const RADIO_MESSAGES = {
 export default function F1Cursor() {
   const [enabled, setEnabled] = useState(true);
   const [hudOpen, setHudOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [selectedTire, setSelectedTire] = useState('soft');
   const [isPitStop, setIsPitStop] = useState(false);
   const [pitTime, setPitTime] = useState('0.00');
@@ -111,6 +121,12 @@ export default function F1Cursor() {
   const lateralGRef = useRef(0);
   const tireRef = useRef(TIRE_COMPOUNDS.soft);
   const lastRadioMsgRef = useRef('');
+
+  // Keep sound state in sync
+  useEffect(() => {
+    const unsubscribe = subscribeSound((val) => setSoundOn(val));
+    return unsubscribe;
+  }, []);
 
   // Keep tireRef up to date with selected tire
   useEffect(() => {
@@ -571,8 +587,20 @@ export default function F1Cursor() {
               </div>
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setHudOpen(false)}
-                  className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                  onClick={() => toggleSound()}
+                  className={`p-1 rounded-md transition-colors cursor-pointer ${
+                    soundOn ? 'text-cyan-400 bg-cyan-500/10' : 'text-zinc-500 hover:text-white hover:bg-white/10'
+                  }`}
+                  title={soundOn ? 'Mute interface sound' : 'Enable interface sound'}
+                >
+                  {soundOn ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                </button>
+                <button
+                  onClick={() => {
+                    playTactileClick();
+                    setHudOpen(false);
+                  }}
+                  className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                   title="Collapse Telemetry HUD"
                 >
                   <ChevronDown className="w-3.5 h-3.5" />
@@ -709,7 +737,10 @@ export default function F1Cursor() {
                   return (
                     <button
                       key={compound.id}
-                      onClick={() => setSelectedTire(compound.id)}
+                      onClick={() => {
+                        playTireRatchet();
+                        setSelectedTire(compound.id);
+                      }}
                       className={`px-2 py-1.5 rounded-lg text-center transition-all cursor-pointer border ${
                         isActive
                           ? `${compound.bgBadge} shadow-[0_0_12px_rgba(255,255,255,0.15)] ring-1 ring-white/20 scale-[1.02]`
@@ -770,7 +801,10 @@ export default function F1Cursor() {
         {/* COMPACT DOCK PILL (Always visible when companion is enabled) */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setHudOpen(!hudOpen)}
+            onClick={() => {
+              playTactileClick();
+              setHudOpen(!hudOpen);
+            }}
             className="apple-glass px-3 py-1.5 rounded-full text-[11px] text-zinc-300 hover:text-white border border-white/10 hover:border-cyan-500/40 transition-all flex items-center gap-2 shadow-2xl active:scale-95 cursor-pointer group"
           >
             <span

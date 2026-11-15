@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X, Printer, Download, Mail, Phone, MapPin, Check, Copy } from 'lucide-react';
 import { personalInfo, experiences, technicalSkills, education, prototypes } from '../data/portfolioData';
+import { playSuccessChime, playTactileClick } from '../utils/soundEffects';
 
 export default function ResumeModal({ isOpen, onClose }) {
   const [copied, setCopied] = React.useState(false);
@@ -24,10 +25,12 @@ export default function ResumeModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const handlePrint = () => {
+    playSuccessChime();
     window.print();
   };
 
   const handleCopyText = () => {
+    playSuccessChime();
     const resumeText = `
 ASHUTOSH GAUTAM
 Phone: ${personalInfo.phone} | Email: ${personalInfo.email} | Location: ${personalInfo.location}

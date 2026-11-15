@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowDown, Code2, Copy, Check, ChevronRight, TrendingUp, MapPin, Sparkles } from 'lucide-react';
 import { personalInfo, stats } from '../data/portfolioData';
+import { playSuccessChime, playChapterPop } from '../utils/soundEffects';
 
 export default function Hero({ onOpenResume, onExplore }) {
   const [copied, setCopied] = useState(false);
@@ -9,7 +10,18 @@ export default function Hero({ onOpenResume, onExplore }) {
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(personalInfo.email);
     setCopied(true);
+    playSuccessChime();
     setTimeout(() => setCopied(false), 2200);
+  };
+
+  const handleExplore = () => {
+    playChapterPop();
+    if (onExplore) onExplore();
+  };
+
+  const handleResume = () => {
+    playSuccessChime();
+    if (onOpenResume) onOpenResume();
   };
 
   const handleMouseMove = (e) => {
@@ -48,7 +60,7 @@ export default function Hero({ onOpenResume, onExplore }) {
         {/* Action Button Row */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
           <button
-            onClick={onExplore}
+            onClick={handleExplore}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:bg-zinc-200 transition-all duration-300 shadow-xl shadow-white/10 active:scale-95 cursor-pointer"
           >
             <span>Explore Featured Work</span>
@@ -56,7 +68,7 @@ export default function Hero({ onOpenResume, onExplore }) {
           </button>
 
           <button
-            onClick={onOpenResume}
+            onClick={handleResume}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/15 text-white font-medium text-sm border border-white/10 hover:border-white/20 transition-all duration-300 active:scale-95 cursor-pointer"
           >
             <span>Read Resume (PDF)</span>

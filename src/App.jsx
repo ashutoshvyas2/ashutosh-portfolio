@@ -13,6 +13,7 @@ import ResumeModal from './components/ResumeModal';
 import F1Cursor from './components/F1Cursor';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { playChapterPop } from './utils/soundEffects';
 
 export default function App() {
   const [resumeOpen, setResumeOpen] = useState(false);
@@ -33,6 +34,7 @@ export default function App() {
   const nextTab = currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
 
   const handleTabChange = (tabId) => {
+    playChapterPop();
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { prototypes } from '../data/portfolioData';
+import { playTactileClick, playSuccessChime } from '../utils/soundEffects';
 
 export default function PrototypesShowcase() {
   const [activeId, setActiveId] = useState(prototypes[0].id);
@@ -38,6 +39,7 @@ export default function PrototypesShowcase() {
 
   const handleArmKillSwitch = () => {
     setKillSwitchArmed(true);
+    playSuccessChime();
     try {
       confetti({
         particleCount: 50,
@@ -83,7 +85,10 @@ export default function PrototypesShowcase() {
             return (
               <button
                 key={proto.id}
-                onClick={() => setActiveId(proto.id)}
+                onClick={() => {
+                  playTactileClick();
+                  setActiveId(proto.id);
+                }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${
                   isActive
                     ? 'bg-white text-black shadow-lg shadow-white/10 scale-105'

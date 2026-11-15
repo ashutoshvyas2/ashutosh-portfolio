@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Sparkles, Menu, X, ArrowUpRight } from 'lucide-react';
+import { FileText, Sparkles, Menu, X, ArrowUpRight, Volume2, VolumeX } from 'lucide-react';
 import { personalInfo } from '../data/portfolioData';
+import { 
+  isSoundEnabled, 
+  toggleSound, 
+  subscribeSound, 
+  playChapterPop, 
+  playSuccessChime 
+} from '../utils/soundEffects';
 
 export default function Navbar({ onOpenResume, activeTab = 'overview', onSelectTab }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -12,7 +20,12 @@ export default function Navbar({ onOpenResume, activeTab = 'overview', onSelectT
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    const unsubscribeSound = subscribeSound((enabled) => setSoundOn(enabled));
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      unsubscribeSound();
+    };
   }, []);
 
   const navLinks = [
@@ -26,10 +39,20 @@ export default function Navbar({ onOpenResume, activeTab = 'overview', onSelectT
   ];
 
   const handleNavClick = (id) => {
+    playChapterPop();
     setMobileMenuOpen(false);
     if (onSelectTab) {
       onSelectTab(id);
     }
+  };
+
+  const handleResumeClick = () => {
+    playSuccessChime();
+    if (onOpenResume) onOpenResume();
+  };
+
+  const handleSoundToggle = () => {
+    toggleSound();
   };
 
   return (
@@ -90,8 +113,26 @@ export default function Navbar({ onOpenResume, activeTab = 'overview', onSelectT
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
+            {/* Apple Micro-Sound Toggle Button */}
             <button
-              onClick={onOpenResume}
+              onClick={handleSoundToggle}
+              title={soundOn ? 'Mute tactile sound effects' : 'Enable Apple tactile sound effects'}
+              aria-label={soundOn ? 'Mute sound effects' : 'Enable sound effects'}
+              className={`p-2 rounded-full border transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center ${
+                soundOn
+                  ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.35)]'
+                  : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {soundOn ? (
+                <Volume2 className="w-3.5 h-3.5" />
+              ) : (
+                <VolumeX className="w-3.5 h-3.5" />
+              )}
+            </button>
+
+            <button
+              onClick={handleResumeClick}
               className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/25 transition-all duration-200 active:scale-95 cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5 text-blue-400" />
@@ -145,10 +186,28 @@ export default function Navbar({ onOpenResume, activeTab = 'overview', onSelectT
           </div>
 
           <div className="space-y-3 pt-6 border-t border-white/10">
+            {/* Mobile Sound Toggle Row */}
+            <button
+              onClick={handleSoundToggle}
+              className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-sm text-zinc-300 hover:text-white cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                {soundOn ? (
+                  <Volume2 className="w-4 h-4 text-cyan-400" />
+                ) : (
+                  <VolumeX className="w-4 h-4 text-zinc-500" />
+                )}
+                <span>Tactile Audio Effects</span>
+              </div>
+              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${soundOn ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-zinc-800 text-zinc-500'}`}>
+                {soundOn ? 'ON' : 'MUTED'}
+              </span>
+            </button>
+
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                onOpenResume();
+                handleResumeClick();
               }}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/15 cursor-pointer"
             >

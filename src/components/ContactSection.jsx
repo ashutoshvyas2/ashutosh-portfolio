@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Check, Copy, Sparkles, MessageSquare, ArrowUpRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { personalInfo } from '../data/portfolioData';
+import { playSuccessChime } from '../utils/soundEffects';
 
 export default function ContactSection() {
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -25,6 +26,7 @@ export default function ContactSection() {
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(personalInfo.email);
     setCopiedEmail(true);
+    playSuccessChime();
     triggerConfetti();
     setTimeout(() => setCopiedEmail(false), 2000);
   };
@@ -32,6 +34,7 @@ export default function ContactSection() {
   const handleCopyPhone = () => {
     navigator.clipboard.writeText(personalInfo.phone);
     setCopiedPhone(true);
+    playSuccessChime();
     triggerConfetti();
     setTimeout(() => setCopiedPhone(false), 2000);
   };
@@ -48,6 +51,7 @@ export default function ContactSection() {
     window.location.href = `mailto:${personalInfo.email}?subject=${subject}&body=${body}`;
 
     setSubmitted(true);
+    playSuccessChime();
     triggerConfetti();
     setTimeout(() => {
       setSubmitted(false);

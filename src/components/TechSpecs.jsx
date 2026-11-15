@@ -11,6 +11,7 @@ import {
   Languages
 } from 'lucide-react';
 import { technicalSkills, personalInfo } from '../data/portfolioData';
+import { playTactileClick } from '../utils/soundEffects';
 
 export default function TechSpecs() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +77,10 @@ export default function TechSpecs() {
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => {
+                  playTactileClick();
+                  setSelectedCategory(cat);
+                }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   selectedCategory === cat
                     ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'

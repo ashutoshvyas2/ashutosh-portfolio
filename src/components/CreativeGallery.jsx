@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Camera, Waves, Globe2, Sparkles, Sliders, Aperture, Eye } from 'lucide-react';
 import { hobbies } from '../data/portfolioData';
+import { playTactileClick } from '../utils/soundEffects';
 
 export default function CreativeGallery() {
   const [activeFilter, setActiveFilter] = useState('natural');
@@ -74,7 +75,10 @@ export default function CreativeGallery() {
             {['natural', 'mono', 'vibrant', 'noir'].map((f) => (
               <button
                 key={f}
-                onClick={() => setActiveFilter(f)}
+                onClick={() => {
+                  playTactileClick();
+                  setActiveFilter(f);
+                }}
                 className={`px-2.5 py-1 rounded-full text-[11px] capitalize transition-all ${
                   activeFilter === f
                     ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30'
@@ -124,7 +128,10 @@ export default function CreativeGallery() {
           {photos.map((p, idx) => (
             <button
               key={p.id}
-              onClick={() => setActivePhoto(idx)}
+              onClick={() => {
+                playTactileClick();
+                setActivePhoto(idx);
+              }}
               className={`relative rounded-xl overflow-hidden h-24 sm:h-28 border transition-all ${
                 activePhoto === idx
                   ? 'border-amber-400 ring-2 ring-amber-400/20 scale-[1.01]'
