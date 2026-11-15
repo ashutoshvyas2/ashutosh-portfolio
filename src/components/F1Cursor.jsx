@@ -88,12 +88,8 @@ export default function F1Cursor() {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [selectedTire, setSelectedTire] = useState('soft');
   const [isPitStop, setIsPitStop] = useState(false);
-  const [pitTime, setPitTime] = useState('0.00');
-  const [pitStatus, setPitStatus] = useState('BOX BOX');
   const [tiresFitted, setTiresFitted] = useState(false);
   const [launchSmoke, setLaunchSmoke] = useState(false);
-  const [steerAngle, setSteerAngle] = useState(0);
-  const [isDrsOpen, setIsDrsOpen] = useState(false);
   const [isSuppressed, setIsSuppressed] = useState(false);
   const suppressedRef = useRef(false);
 
@@ -109,6 +105,15 @@ export default function F1Cursor() {
   const drsBadgeRef = useRef(null);
   const radioTextRef = useRef(null);
   const shiftLightRefs = useRef([]);
+
+  // Direct DOM transforms (NO React re-renders during motion)
+  const carRotateRef = useRef(null);
+  const frontSteerLeftRef = useRef(null);
+  const frontSteerRightRef = useRef(null);
+  const frontWingRef = useRef(null);
+  const drsFlapRef = useRef(null);
+  const pitTimeTextRef = useRef(null);
+  const pitStatusTextRef = useRef(null);
 
   // Physics & Animation tracking refs
   const posRef = useRef({ x: -100, y: -100 });
@@ -163,7 +168,6 @@ export default function F1Cursor() {
         // Pit exit / launch
         pitActiveRef.current = false;
         setIsPitStop(false);
-        setPitStatus('GO GO GO!');
         setLaunchSmoke(true);
         setTimeout(() => setLaunchSmoke(false), 600);
       }
@@ -209,20 +213,23 @@ export default function F1Cursor() {
           pitActiveRef.current = true;
           pitStartRef.current = now;
           setIsPitStop(true);
-          setPitStatus('BOX BOX');
           setTiresFitted(false);
-          setSteerAngle(0);
-          setIsDrsOpen(false);
         } else {
-          // Timer progression for pit stop
+          // Direct DOM timer progression for pit stop (0 re-renders)
           const elapsed = (now - pitStartRef.current) / 1000;
           if (elapsed < 1.82) {
-            setPitTime(elapsed.toFixed(2));
-            setPitStatus('CHANGING TIRES...');
+            if (pitTimeTextRef.current) pitTimeTextRef.current.innerText = `PIT: ${elapsed.toFixed(2)}s`;
+            if (pitStatusTextRef.current) {
+              pitStatusTextRef.current.innerText = 'CHANGING TIRES...';
+              pitStatusTextRef.current.className = 'text-yellow-300';
+            }
           } else {
-            setPitTime('1.82');
-            setPitStatus('TIRES FITTED ✓');
-            setTiresFitted(true);
+            if (pitTimeTextRef.current) pitTimeTextRef.current.innerText = 'PIT: 1.82s';
+            if (pitStatusTextRef.current) {
+              pitStatusTextRef.current.innerText = 'TIRES FITTED ✓';
+              pitStatusTextRef.current.className = 'text-emerald-400 font-bold';
+            }
+            if (!tiresFitted) setTiresFitted(true);
           }
         }
       } else {
@@ -238,9 +245,9 @@ export default function F1Cursor() {
       let drsActive = false;
 
       if (!pitActiveRef.current) {
-        // Dynamic grip factor from selected tire compound
+        // Butter-smooth, responsive glide formula matching Pacman's fluid motion
         const grip = tireRef.current.grip || 1.0;
-        const baseSpeed = Math.min(0.12, Math.max(0.06, dist * 0.00065));
+        const baseSpeed = Math.min(0.16, Math.max(0.08, dist * 0.001));
         const effectiveSpeed = baseSpeed * grip;
 
         posRef.current.x += dx * effectiveSpeed;
@@ -252,23 +259,37 @@ export default function F1Cursor() {
           let diff = targetAngle - currentRotation;
           while (diff < -180) diff += 360;
           while (diff > 180) diff -= 360;
-          currentRotation += diff * 0.20;
+          currentRotation += diff * 0.22;
           rotationRef.current = currentRotation;
 
           // Articulated Front Steering & Active Front Wing Flaps
           currentSteer = Math.max(-22, Math.min(22, diff * 1.35));
-          setSteerAngle(currentSteer);
 
           // Active Rear Wing DRS on straights
           drsActive = dist > 45 && Math.abs(diff) < 9;
-          setIsDrsOpen(drsActive);
-        } else {
-          setSteerAngle(0);
-          setIsDrsOpen(false);
         }
-      } else {
-        setSteerAngle(0);
-        setIsDrsOpen(false);
+      }
+
+      // ========================================================
+      // DIRECT DOM CAR & WHEEL TRANSFORMS (ZERO React Re-renders)
+      // ========================================================
+      if (containerRef.current) {
+        containerRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0)`;
+      }
+      if (carRotateRef.current) {
+        carRotateRef.current.style.transform = `rotate(${currentRotation}deg)`;
+      }
+      if (frontSteerLeftRef.current) {
+        frontSteerLeftRef.current.style.transform = `rotate(${currentSteer}deg)`;
+      }
+      if (frontSteerRightRef.current) {
+        frontSteerRightRef.current.style.transform = `rotate(${currentSteer}deg)`;
+      }
+      if (frontWingRef.current) {
+        frontWingRef.current.style.transform = `rotate(${currentSteer * 0.65}deg)`;
+      }
+      if (drsFlapRef.current) {
+        drsFlapRef.current.style.transform = drsActive ? 'translate(-3.5px, 0)' : 'translate(0, 0)';
       }
 
       // ========================================================
@@ -318,9 +339,7 @@ export default function F1Cursor() {
         currentRadioMsg = RADIO_MESSAGES.highG;
       }
 
-      // ========================================================
-      // DIRECT DOM TELEMETRY UPDATES (Zero React Re-render Lag)
-      // ========================================================
+      // Direct DOM Telemetry updates
       if (speedTextRef.current) speedTextRef.current.innerText = speedKmH;
       if (speedPillRef.current) speedPillRef.current.innerText = `${speedKmH} km/h`;
       if (gearTextRef.current) gearTextRef.current.innerText = currentGear;
@@ -334,7 +353,7 @@ export default function F1Cursor() {
         rpmBarRef.current.style.width = `${pct}%`;
       }
 
-      // Update Shift Lights (10 LEDs: 3 Green, 4 Red, 3 Purple)
+      // Update Shift Lights (10 LEDs)
       const litCount = Math.floor(((rpm - 6000) / 8850) * 10);
       shiftLightRefs.current.forEach((led, idx) => {
         if (!led) return;
@@ -342,7 +361,7 @@ export default function F1Cursor() {
         if (isLit) {
           if (idx < 3) led.style.backgroundColor = '#10b981'; // Green
           else if (idx < 7) led.style.backgroundColor = '#ef4444'; // Red
-          else led.style.backgroundColor = '#a855f7'; // Purple (Optimal Shift)
+          else led.style.backgroundColor = '#a855f7'; // Purple
           led.style.boxShadow = '0 0 6px currentColor';
         } else {
           led.style.backgroundColor = '#27272a';
@@ -372,11 +391,6 @@ export default function F1Cursor() {
       if (radioTextRef.current && lastRadioMsgRef.current !== currentRadioMsg) {
         lastRadioMsgRef.current = currentRadioMsg;
         radioTextRef.current.innerText = currentRadioMsg;
-      }
-
-      // Move Car Position
-      if (containerRef.current) {
-        containerRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0)`;
       }
 
       animFrameRef.current = requestAnimationFrame(loop);
@@ -412,7 +426,8 @@ export default function F1Cursor() {
         }}
       >
         <div
-          className="relative transition-transform duration-75"
+          ref={carRotateRef}
+          className="relative"
           style={{
             transform: `rotate(${rotationRef.current}deg)`,
             transformOrigin: '15px 8px',
@@ -429,10 +444,10 @@ export default function F1Cursor() {
               {/* Pit Stop LED Timing Board */}
               <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black/95 px-2 py-0.5 rounded-full border border-yellow-400/40 text-[9px] font-mono text-yellow-400 shadow-xl whitespace-nowrap flex items-center gap-1.5 z-20">
                 <span className="w-1 h-1 rounded-full bg-red-500 animate-ping" />
-                <span>PIT: {pitTime}s</span>
+                <span ref={pitTimeTextRef}>PIT: 0.00s</span>
                 <span className="text-zinc-400">•</span>
-                <span className={tiresFitted ? 'text-emerald-400 font-bold' : 'text-yellow-300'}>
-                  {pitStatus}
+                <span ref={pitStatusTextRef} className="text-yellow-300">
+                  BOX BOX
                 </span>
               </div>
 
@@ -525,15 +540,12 @@ export default function F1Cursor() {
             <rect x="2" y="6" width="6" height="28" rx="1.5" fill="#09090b" stroke="#06b6d4" strokeWidth="1" />
             <rect x="4" y="9" width="3" height="22" fill="#0e7490" />
 
-            {/* Active Upper DRS Flap */}
+            {/* Active Upper DRS Flap (Direct GPU transform) */}
             <g
-              transform={isDrsOpen ? 'translate(-3.5, 0)' : 'translate(0, 0)'}
-              className="transition-transform duration-150"
+              ref={drsFlapRef}
+              style={{ transform: 'translate(0, 0)' }}
             >
               <rect x="5" y="9" width="3" height="22" rx="0.5" fill="#22d3ee" stroke="#0891b2" strokeWidth="0.5" />
-              {isDrsOpen && (
-                <rect x="4.5" y="17" width="2" height="6" rx="0.5" fill="#10b981" className="animate-pulse" />
-              )}
             </g>
 
             {/* Rear Tires with Dynamic Compound Color Stripe */}
@@ -565,20 +577,20 @@ export default function F1Cursor() {
             <line x1="44" y1="16" x2="52" y2="7" stroke="#71717a" strokeWidth="0.9" />
             <line x1="44" y1="24" x2="52" y2="33" stroke="#71717a" strokeWidth="0.9" />
 
-            {/* Front Left Tire (Dynamic Compound Stripe) */}
-            <g transform={`rotate(${steerAngle}, 54, 6)`} className="transition-transform duration-75">
+            {/* Front Left Tire (Direct DOM rotation around hub at 54, 6) */}
+            <g ref={frontSteerLeftRef} style={{ transformOrigin: '54px 6px' }}>
               <rect x="48" y="3" width="12" height="6" rx="2" fill="url(#tireGrad)" stroke="#111" strokeWidth="0.8" />
               <line x1="48" y1="6" x2="60" y2="6" stroke={currentTireObj.color} strokeWidth="1.2" />
             </g>
 
-            {/* Front Right Tire (Dynamic Compound Stripe) */}
-            <g transform={`rotate(${steerAngle}, 54, 34)`} className="transition-transform duration-75">
+            {/* Front Right Tire (Direct DOM rotation around hub at 54, 34) */}
+            <g ref={frontSteerRightRef} style={{ transformOrigin: '54px 34px' }}>
               <rect x="48" y="31" width="12" height="6" rx="2" fill="url(#tireGrad)" stroke="#111" strokeWidth="0.8" />
               <line x1="48" y1="34" x2="60" y2="34" stroke={currentTireObj.color} strokeWidth="1.2" />
             </g>
 
-            {/* Front Wing Flap Cascades */}
-            <g transform={`rotate(${steerAngle * 0.65}, 68, 20)`} className="transition-transform duration-75">
+            {/* Front Wing Flap Cascades (Direct DOM rotation at 68, 20) */}
+            <g ref={frontWingRef} style={{ transformOrigin: '68px 20px' }}>
               <path d="M 64 8 L 74 11 L 75 20 L 74 29 L 64 32 L 63 26 L 68 20 L 63 14 Z" fill="#06b6d4" stroke="#0891b2" strokeWidth="0.8" />
               <line x1="66" y1="10" x2="73" y2="13" stroke="#ffffff" strokeWidth="1" opacity="0.9" />
               <line x1="66" y1="30" x2="73" y2="27" stroke="#ffffff" strokeWidth="1" opacity="0.9" />
