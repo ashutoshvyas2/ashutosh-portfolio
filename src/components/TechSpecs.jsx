@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Cpu,
   Code2,
@@ -8,14 +8,49 @@ import {
   Sparkles,
   Layers,
   CheckCircle2,
-  Languages
+  Languages,
+  Play
 } from 'lucide-react';
 import { technicalSkills, personalInfo } from '../data/portfolioData';
 import { playTactileClick } from '../utils/soundEffects';
+import KineticProverbModal from './KineticProverbModal';
 
 export default function TechSpecs() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const bottomSentinelRef = useRef(null);
+  const hasAutoTriggeredRef = useRef(false);
+
+  // Auto-trigger kinetic proverb modal when user scrolls to bottom of Skills & Tools
+  useEffect(() => {
+    const alreadySeen = sessionStorage.getItem('proverb_modal_seen');
+    if (alreadySeen) {
+      hasAutoTriggeredRef.current = true;
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !hasAutoTriggeredRef.current) {
+          hasAutoTriggeredRef.current = true;
+          sessionStorage.setItem('proverb_modal_seen', 'true');
+          // Brief 350ms pause as user settles at bottom of section
+          setTimeout(() => {
+            setIsModalOpen(true);
+          }, 350);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (bottomSentinelRef.current) {
+      observer.observe(bottomSentinelRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const categories = ['All', ...technicalSkills.map((c) => c.category)];
 
@@ -166,6 +201,46 @@ export default function TechSpecs() {
           ))}
         </div>
       </div>
+
+      {/* Engineering Philosophy Banner & Replay Trigger */}
+      <div className="mt-6 apple-glass rounded-2xl p-6 border border-amber-500/25 bg-gradient-to-r from-amber-500/10 via-transparent to-cyan-500/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.2)]">
+            <Sparkles className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-bold text-white">Engineering Philosophy</h4>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-mono border border-amber-400/30 font-semibold">
+                THE COMPLETE PROVERB
+              </span>
+            </div>
+            <p className="text-xs text-zinc-300 mt-0.5">
+              "Jack of all trades, master of none... but oftentimes better than a master of one."
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            playTactileClick();
+            setIsModalOpen(true);
+          }}
+          className="px-4 py-2 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 active:scale-95 text-black text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-400/20 shrink-0"
+        >
+          <Play className="w-3.5 h-3.5 fill-current" />
+          <span>Experience Philosophy</span>
+        </button>
+      </div>
+
+      {/* Invisible Bottom Sentinel for Auto-Triggering Pop-Up */}
+      <div ref={bottomSentinelRef} className="h-4 w-full" aria-hidden="true" />
+
+      {/* Kinetic Typography Proverb Pop-Up Modal */}
+      <KineticProverbModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </section>
   );
 }
