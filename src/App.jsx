@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ScrollProgress from './components/ScrollProgress';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -11,13 +11,43 @@ import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import ResumeModal from './components/ResumeModal';
 import F1Cursor from './components/F1Cursor';
-import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { playChapterPop } from './utils/soundEffects';
+import { playChapterPop, playSuccessChime, playTactileClick } from './utils/soundEffects';
+import { recordVisit, toggleOwnerMode, subscribeOwnerMode } from './utils/visitorTracker';
 
 export default function App() {
   const [resumeOpen, setResumeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [ownerToast, setOwnerToast] = useState(null);
+
+  // Initialize visit tracking & secret global shortcut (Ctrl+Shift+A or Alt+V)
+  useEffect(() => {
+    // Increment visitor count in cloud (deduplicated per session)
+    recordVisit();
+
+    const handleKeyDown = (e) => {
+      // Secret Keybind: Ctrl + Shift + A or Alt + V
+      if (
+        (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'a' || e.code === 'KeyA')) ||
+        (e.altKey && (e.key.toLowerCase() === 'v' || e.code === 'KeyV'))
+      ) {
+        e.preventDefault();
+        const nextOwner = toggleOwnerMode();
+        if (nextOwner) {
+          playSuccessChime();
+          setOwnerToast('unlocked');
+        } else {
+          playTactileClick();
+          setOwnerToast('locked');
+        }
+        setTimeout(() => setOwnerToast(null), 3500);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const chapters = [
     { id: 'overview', label: 'About Me' },
@@ -130,6 +160,18 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Secret Owner Mode Notification Toast */}
+      {ownerToast && (
+        <div className="fixed top-24 right-4 sm:right-6 z-50 px-4 py-2.5 rounded-2xl apple-glass border border-amber-500/35 bg-[#0e0e14]/90 text-amber-300 text-xs font-mono shadow-[0_10px_35px_rgba(0,0,0,0.8)] backdrop-blur-xl flex items-center gap-2.5 animate-in fade-in slide-in-from-top-3">
+          <Lock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+          <span>
+            {ownerToast === 'unlocked'
+              ? '🔒 Owner Mode Unlocked — Scroll down to "Systems Optimal" in footer to view live visitor counts!'
+              : '🔒 Owner Mode Locked — Visitor telemetry hidden.'}
+          </span>
+        </div>
+      )}
 
       {/* Minimalist Apple Footer */}
       <Footer />

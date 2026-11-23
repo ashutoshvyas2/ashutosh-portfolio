@@ -1,11 +1,35 @@
-import React, { useState } from 'react';
-import { ArrowDown, Code2, Copy, Check, ChevronRight, TrendingUp, MapPin, Sparkles } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowDown, Code2, Copy, Check, ChevronRight, TrendingUp, MapPin, Sparkles, Lock } from 'lucide-react';
 import { personalInfo, stats } from '../data/portfolioData';
-import { playSuccessChime, playChapterPop } from '../utils/soundEffects';
+import { playSuccessChime, playChapterPop, playTactileClick } from '../utils/soundEffects';
+import { toggleOwnerMode } from '../utils/visitorTracker';
 
 export default function Hero({ onOpenResume, onExplore }) {
   const [copied, setCopied] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [ownerToast, setOwnerToast] = useState(null);
+  const avatarClicksRef = useRef(0);
+  const avatarTimerRef = useRef(null);
+
+  // Secret Owner Mode Trigger: Triple-click the AG Avatar
+  const handleAvatarTripleClick = () => {
+    avatarClicksRef.current += 1;
+    playTactileClick();
+
+    if (avatarTimerRef.current) clearTimeout(avatarTimerRef.current);
+
+    if (avatarClicksRef.current >= 3) {
+      avatarClicksRef.current = 0;
+      const isNowOwner = toggleOwnerMode();
+      playSuccessChime();
+      setOwnerToast(isNowOwner ? 'unlocked' : 'locked');
+      setTimeout(() => setOwnerToast(null), 3500);
+    } else {
+      avatarTimerRef.current = setTimeout(() => {
+        avatarClicksRef.current = 0;
+      }, 700);
+    }
+  };
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(personalInfo.email);
@@ -112,9 +136,15 @@ export default function Hero({ onOpenResume, onExplore }) {
           {/* Interactive Window Header */}
           <div className="flex flex-wrap items-center justify-between pb-4 border-b border-white/10 mb-6 text-xs text-zinc-400 gap-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
+              {/* Secret Trigger: Triple-click AG Avatar to toggle private Owner Mode */}
+              <button
+                onClick={handleAvatarTripleClick}
+                className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md cursor-pointer active:scale-90 transition-transform"
+                title="Ashutosh Gautam"
+                aria-label="Profile Avatar"
+              >
                 AG
-              </div>
+              </button>
               <div>
                 <span className="text-white font-medium text-xs">Ashutosh Gautam</span>
                 <span className="text-zinc-500 text-[11px] ml-1.5 flex-inline items-center gap-1">
@@ -127,6 +157,18 @@ export default function Hero({ onOpenResume, onExplore }) {
               <span>Available for Full-Time & Intern Roles</span>
             </div>
           </div>
+
+          {/* Owner Mode Secret Toast Notification */}
+          {ownerToast && (
+            <div className="mb-4 p-2.5 rounded-xl apple-glass border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs font-mono flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+              <Lock className="w-3.5 h-3.5 text-amber-400" />
+              <span>
+                {ownerToast === 'unlocked'
+                  ? '🔒 Owner Mode Unlocked — Scroll down to "Systems Optimal" in footer to view live visitor counts!'
+                  : '🔒 Owner Mode Locked — Visitor metrics hidden.'}
+              </span>
+            </div>
+          )}
 
           {/* Card Body - Dual Focus Split (Web Development + Market Analytics) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
