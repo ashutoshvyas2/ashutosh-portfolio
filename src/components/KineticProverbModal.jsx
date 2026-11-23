@@ -1,97 +1,63 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, ArrowRight, Play, RotateCcw } from 'lucide-react';
+import { X, Sparkles, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { playTactileClick, playSuccessChime } from '../utils/soundEffects';
 
 /**
  * KineticProverbModal
  * 
- * Cinematic pop-up inspired by the bold kinetic scrolling typography of arddev.in,
- * featuring the full proverb and golden twist:
- * "JACK OF ALL TRADES. MASTER OF NONE. ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE."
+ * Scroll-driven kinetic typography pop-up modal inspired by arddev.in.
+ * Triggers automatically at the bottom of "Skills & Tools".
  * 
- * Features:
- * - Timed kinetic typography entrance line-by-line with sound cues.
- * - Golden glowing punchline resolution celebrating multidisciplinary engineering.
- * - Suppresses F1 companion cursor while active.
- * - Auto-dismisses smoothly after the full message is displayed.
- * - Skip (Esc / click) support.
+ * Behavior:
+ * - Text reveals as the user SCROLLS (not by auto-timer).
+ * - Full proverb with the golden twist:
+ *   1. JACK
+ *   2. OF ALL TRADES.
+ *   3. MASTER OF NONE.
+ *   4. ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE. (Golden twist)
+ *   5. Subtext: Full-Stack MERN Core × Financial Data Analytics
+ * - Once fully scrolled and displayed, auto-dismisses smoothly after a brief pause.
+ * - Skip (Esc / button) available at all times.
+ * - Suppresses F1 car during display.
  */
 export default function KineticProverbModal({ isOpen, onClose }) {
-  const [animStep, setAnimStep] = useState(0); // 0: enter, 1: JACK, 2: OF ALL TRADES, 3: MASTER OF NONE, 4: GOLDEN TWIST, 5: SUBTEXT
-  const [progress, setProgress] = useState(0);
-  const timersRef = useRef([]);
-
-  // Clear all pending timeouts
-  const clearTimers = () => {
-    timersRef.current.forEach((t) => clearTimeout(t));
-    timersRef.current = [];
-  };
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const playedMilestones = useRef({ 1: false, 2: false, 3: false, 4: false });
+  const completionTriggered = useRef(false);
+  const autoCloseTimer = useRef(null);
 
   useEffect(() => {
     if (!isOpen) {
-      clearTimers();
-      setAnimStep(0);
-      setProgress(0);
-      // Ensure F1 car suppression is cleared
+      if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
+      setScrollProgress(0);
+      setIsCompleted(false);
+      playedMilestones.current = { 1: false, 2: false, 3: false, 4: false };
+      completionTriggered.current = false;
+      document.body.style.overflow = '';
       window.dispatchEvent(
         new CustomEvent('f1-suppress', { detail: { suppress: false } })
       );
       return;
     }
 
-    // Suppress F1 car while dramatic pop-up is active
+    // Lock page background scroll and suppress F1 car
+    document.body.style.overflow = 'hidden';
     window.dispatchEvent(
       new CustomEvent('f1-suppress', { detail: { suppress: true } })
     );
 
-    clearTimers();
-    setAnimStep(0);
-    setProgress(0);
+    setScrollProgress(0);
+    setIsCompleted(false);
+    playedMilestones.current = { 1: false, 2: false, 3: false, 4: false };
+    completionTriggered.current = false;
 
-    // Sequence timings
-    const t0 = setTimeout(() => {
-      setAnimStep(1); // JACK
-      playTactileClick();
-    }, 250);
-
-    const t1 = setTimeout(() => {
-      setAnimStep(2); // OF ALL TRADES.
-      playTactileClick();
-    }, 850);
-
-    const t2 = setTimeout(() => {
-      setAnimStep(3); // MASTER OF NONE.
-      playTactileClick();
-    }, 1550);
-
-    const t3 = setTimeout(() => {
-      setAnimStep(4); // ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
-      playSuccessChime();
-    }, 2450);
-
-    const t4 = setTimeout(() => {
-      setAnimStep(5); // Subtext badge
-    }, 3050);
-
-    // Auto-dismiss after user reads the full revelation (~5.8s total)
-    const tDismiss = setTimeout(() => {
-      handleClose();
-    }, 5800);
-
-    timersRef.current = [t0, t1, t2, t3, t4, tDismiss];
-
-    // Smooth progress countdown for auto-dismiss indicator
-    const startTime = Date.now();
-    const totalDuration = 5800;
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min(100, (elapsed / totalDuration) * 100);
-      setProgress(pct);
-      if (pct >= 100) clearInterval(interval);
-    }, 50);
-
-    timersRef.current.push(interval);
+    // Reset container scroll to top
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -101,8 +67,8 @@ export default function KineticProverbModal({ isOpen, onClose }) {
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      clearTimers();
-      clearInterval(interval);
+      if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
+      document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
       window.dispatchEvent(
         new CustomEvent('f1-suppress', { detail: { suppress: false } })
@@ -110,166 +76,218 @@ export default function KineticProverbModal({ isOpen, onClose }) {
     };
   }, [isOpen]);
 
+  const handleScroll = (e) => {
+    const el = e.currentTarget;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll <= 0) return;
+
+    const progress = Math.min(1, Math.max(0, el.scrollTop / maxScroll));
+    setScrollProgress(progress);
+
+    // Audio cues for scroll milestones
+    if (progress >= 0.12 && !playedMilestones.current[1]) {
+      playedMilestones.current[1] = true;
+      playTactileClick();
+    }
+    if (progress >= 0.35 && !playedMilestones.current[2]) {
+      playedMilestones.current[2] = true;
+      playTactileClick();
+    }
+    if (progress >= 0.58 && !playedMilestones.current[3]) {
+      playedMilestones.current[3] = true;
+      playTactileClick();
+    }
+    if (progress >= 0.78 && !playedMilestones.current[4]) {
+      playedMilestones.current[4] = true;
+      playSuccessChime();
+    }
+
+    // Once user scrolls to completion (>= 96%)
+    if (progress >= 0.95 && !completionTriggered.current) {
+      completionTriggered.current = true;
+      setIsCompleted(true);
+      // Auto-dismiss smoothly after reading (~1.5s)
+      autoCloseTimer.current = setTimeout(() => {
+        handleClose();
+      }, 1500);
+    }
+  };
+
   const handleClose = () => {
     playTactileClick();
-    clearTimers();
+    if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
+    document.body.style.overflow = '';
     window.dispatchEvent(
       new CustomEvent('f1-suppress', { detail: { suppress: false } })
     );
     onClose();
   };
 
+  // Milestone thresholds
+  const isLine1Active = scrollProgress >= 0.10; // JACK
+  const isLine2Active = scrollProgress >= 0.32; // OF ALL TRADES.
+  const isLine3Active = scrollProgress >= 0.55; // MASTER OF NONE.
+  const isLine4Active = scrollProgress >= 0.78; // ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
+  const isSubtextActive = scrollProgress >= 0.88; // Subtext
+
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          key="proverb-overlay"
+          key="scroll-proverb-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.45, ease: 'easeInOut' } }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-black/90 backdrop-blur-2xl select-none"
-          onClick={handleClose}
+          className="fixed inset-0 z-[100]"
         >
-          {/* Ambient Radial Spotlight */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-amber-500/10 via-cyan-500/10 to-transparent rounded-full blur-[120px]" />
-          </div>
+          {/* Top Fixed Control Bar: Scroll Progress + Skip Button */}
+          <div className="fixed top-6 right-6 sm:top-8 sm:right-8 z-30 flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 border border-white/10 text-[11px] font-mono text-zinc-400 backdrop-blur-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span>Scroll Progress: {Math.round(scrollProgress * 100)}%</span>
+            </div>
 
-          {/* Top Control Bar: Skip Button with Circular Countdown */}
-          <div className="absolute top-6 right-6 sm:top-8 sm:right-8 z-20 flex items-center gap-3">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClose();
-              }}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-300 hover:text-white text-xs font-mono transition-all active:scale-95 cursor-pointer shadow-xl backdrop-blur-md"
-              title="Skip animation (Esc)"
+              onClick={handleClose}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-300 hover:text-white text-xs font-mono transition-all active:scale-95 cursor-pointer shadow-xl backdrop-blur-md"
+              title="Skip (Esc)"
             >
               <span>Skip</span>
-              <div className="relative w-3.5 h-3.5 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-white/20"
-                    strokeWidth="4"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className="text-amber-400 transition-all duration-75"
-                    strokeDasharray={`${progress}, 100`}
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-              </div>
-              <X className="w-3.5 h-3.5 ml-0.5 text-zinc-400" />
+              <X className="w-3.5 h-3.5 text-zinc-400" />
             </button>
           </div>
 
-          {/* Center Card Content */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 15 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.96, opacity: 0, y: -15, transition: { duration: 0.35 } }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-12 md:p-16 border border-white/15 bg-gradient-to-b from-[#0e0e14]/90 via-[#07070b]/95 to-[#040407]/95 shadow-[0_25px_80px_rgba(0,0,0,0.95)] relative"
+          {/* Top Thin Progress Line */}
+          <div className="fixed top-0 left-0 right-0 h-1 bg-white/5 z-30">
+            <div
+              className="h-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 transition-all duration-75"
+              style={{ width: `${scrollProgress * 100}%` }}
+            />
+          </div>
+
+          {/* Scrollable Container (User scrolls this element) */}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="w-full h-full overflow-y-auto bg-black/92 backdrop-blur-2xl select-none"
           >
-            {/* Top Philosophy Tag */}
-            <div className="flex items-center gap-2 pb-6 sm:pb-8 text-xs font-mono uppercase tracking-widest text-zinc-500 border-b border-white/10">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-              <span>Engineering Philosophy</span>
-              <span className="text-zinc-600">•</span>
-              <span className="text-zinc-400 font-sans normal-case">The Complete Proverb</span>
-            </div>
+            {/* Scroll Track: 280vh gives generous physical scrolling travel */}
+            <div className="relative h-[280vh] w-full">
+              {/* Sticky Center Stage (Pinned to viewport while user scrolls) */}
+              <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center p-4 sm:p-10 pointer-events-none">
+                {/* Ambient Radial Glow */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  <div
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-amber-500/15 via-cyan-500/10 to-transparent rounded-full blur-[140px] transition-opacity duration-500"
+                    style={{ opacity: isLine4Active ? 1 : 0.4 }}
+                  />
+                </div>
 
-            {/* Kinetic Typography Block */}
-            <div className="py-6 sm:py-8 space-y-2 sm:space-y-4">
-              {/* Line 1: JACK */}
-              <AnimatePresence>
-                {animStep >= 1 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30, scale: 0.92 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                    className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white uppercase leading-[0.95]"
-                  >
-                    JACK
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Line 2: OF ALL TRADES. */}
-              <AnimatePresence>
-                {animStep >= 2 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30, scale: 0.92 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                    className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-zinc-300 uppercase leading-[0.95]"
-                  >
-                    OF ALL TRADES.
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Line 3: MASTER OF NONE. */}
-              <AnimatePresence>
-                {animStep >= 3 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30, scale: 0.92 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                    className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-zinc-500 uppercase leading-[0.95]"
-                  >
-                    MASTER OF NONE.
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Line 4: THE GOLDEN TWIST */}
-              <AnimatePresence>
-                {animStep >= 4 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 25, scale: 0.96, filter: 'blur(8px)' }}
-                    animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                    transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                    className="pt-4 sm:pt-6"
-                  >
-                    <div className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(251,191,36,0.45)] leading-tight">
-                      ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
+                {/* Main Glass Card */}
+                <div className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl p-6 sm:p-12 md:p-16 border border-white/15 bg-gradient-to-b from-[#0e0e14]/90 via-[#07070b]/95 to-[#040407]/95 shadow-[0_25px_80px_rgba(0,0,0,0.95)] relative pointer-events-auto">
+                  {/* Top Philosophy Tag */}
+                  <div className="flex items-center justify-between pb-6 sm:pb-8 text-xs font-mono uppercase tracking-widest border-b border-white/10 text-zinc-500">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                      <span className="text-zinc-300 font-semibold">Engineering Philosophy</span>
+                      <span className="text-zinc-600">•</span>
+                      <span className="text-zinc-400 font-sans normal-case">The Complete Proverb</span>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
 
-            {/* Bottom Context Badge */}
-            <AnimatePresence>
-              {animStep >= 5 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, ease: 'easeOut' }}
-                  className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs"
-                >
-                  <div className="flex items-center gap-2.5 text-zinc-400">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-ping" />
-                    <span className="font-mono text-zinc-300 font-semibold tracking-wide">
-                      Ashutosh Gautam: Full-Stack MERN Core × Financial Data Analytics
+                    <span className="hidden sm:inline text-[11px] text-zinc-500">
+                      Scroll to advance ↓
                     </span>
                   </div>
 
-                  <span className="text-zinc-500 text-[11px] font-mono">
-                    Auto-closing in 2s • or click anywhere
+                  {/* Kinetic Typography Stack */}
+                  <div className="py-6 sm:py-8 space-y-2 sm:space-y-4">
+                    {/* Line 1: JACK */}
+                    <div
+                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter uppercase leading-[0.95] transition-all duration-300 ${
+                        isLine1Active
+                          ? 'opacity-100 text-white scale-100 blur-0 translate-y-0'
+                          : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
+                      }`}
+                    >
+                      JACK
+                    </div>
+
+                    {/* Line 2: OF ALL TRADES. */}
+                    <div
+                      className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter uppercase leading-[0.95] transition-all duration-300 ${
+                        isLine2Active
+                          ? 'opacity-100 text-zinc-200 scale-100 blur-0 translate-y-0'
+                          : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
+                      }`}
+                    >
+                      OF ALL TRADES.
+                    </div>
+
+                    {/* Line 3: MASTER OF NONE. */}
+                    <div
+                      className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter uppercase leading-[0.95] transition-all duration-300 ${
+                        isLine3Active
+                          ? 'opacity-100 text-zinc-400 scale-100 blur-0 translate-y-0'
+                          : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
+                      }`}
+                    >
+                      MASTER OF NONE.
+                    </div>
+
+                    {/* Line 4: THE GOLDEN TWIST */}
+                    <div
+                      className={`pt-4 sm:pt-6 transition-all duration-500 ${
+                        isLine4Active
+                          ? 'opacity-100 scale-100 blur-0 translate-y-0'
+                          : 'opacity-0 scale-95 blur-md translate-y-4'
+                      }`}
+                    >
+                      <div className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(251,191,36,0.55)] leading-tight">
+                        ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Context Badge */}
+                  <div
+                    className={`pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs transition-all duration-500 ${
+                      isSubtextActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 text-zinc-400">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-ping" />
+                      <span className="font-mono text-zinc-300 font-semibold tracking-wide">
+                        Ashutosh Gautam: Full-Stack MERN Core × Financial Data Analytics
+                      </span>
+                    </div>
+
+                    {isCompleted ? (
+                      <span className="text-emerald-400 font-mono text-[11px] flex items-center gap-1.5 animate-pulse font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Closing message...</span>
+                      </span>
+                    ) : (
+                      <span className="text-zinc-500 text-[11px] font-mono">
+                        Scroll further to complete
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Initial Scroll Prompt (Fades out when user begins scrolling) */}
+                <div
+                  className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-zinc-400 text-xs font-mono transition-opacity duration-300 ${
+                    scrollProgress > 0.08 ? 'opacity-0 pointer-events-none' : 'opacity-100 animate-bounce'
+                  }`}
+                >
+                  <span className="tracking-wider uppercase text-[10px] text-amber-400 font-bold">
+                    Scroll down with mouse wheel or swipe ↓
                   </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+                  <ChevronDown className="w-4 h-4 text-amber-400" />
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
