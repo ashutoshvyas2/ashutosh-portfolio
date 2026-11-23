@@ -4,29 +4,40 @@ import { X, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { playTactileClick, playSuccessChime } from '../utils/soundEffects';
 
 /**
- * KineticProverbModal
+ * KineticProverbModal (High-Performance 60/120 FPS Edition)
  * 
- * Clean, minimalist scroll-driven kinetic typography pop-up modal.
- * Triggers automatically at the bottom of "Skills & Tools".
- * 
- * Features pure bold typography:
- * 1. JACK
- * 2. OF ALL TRADES.
- * 3. MASTER OF NONE.
- * 4. ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
+ * Performance Optimizations for Laptop Trackpads & Integrated GPUs:
+ * - Zero React re-renders during micro-scrolling: React state only updates when crossing
+ *   one of the 4 discrete text steps (0 -> 1 -> 2 -> 3 -> 4).
+ * - Direct DOM manipulation for the progress line, text counter, and scroll prompt.
+ * - Eliminated heavy GPU blur filters (backdrop-blur-2xl, blur-[140px], and text blur filters).
+ * - Uses hardware-accelerated CSS transforms and opacity with will-change.
+ * - rAF-throttled scroll listener for butter-smooth 60/120 FPS performance.
  */
 export default function KineticProverbModal({ isOpen, onClose }) {
-  const [scrollProgress, setScrollProgress] = useState(0);
+  // Only 2 lightweight states: active step (0-4) and completion boolean
+  const [activeStep, setActiveStep] = useState(0); // 0: none, 1: JACK, 2: OF ALL TRADES, 3: MASTER OF NONE, 4: GOLDEN TWIST
   const [isCompleted, setIsCompleted] = useState(false);
+
+  // Direct DOM refs for zero-re-render high frequency updates
   const scrollContainerRef = useRef(null);
+  const progressBarRef = useRef(null);
+  const progressTextRef = useRef(null);
+  const scrollPromptRef = useRef(null);
+  const ambientGlowRef = useRef(null);
+
+  // Internal tracking refs
+  const activeStepRef = useRef(0);
   const playedMilestones = useRef({ 1: false, 2: false, 3: false, 4: false });
   const completionTriggered = useRef(false);
   const autoCloseTimer = useRef(null);
+  const rafPending = useRef(false);
 
   useEffect(() => {
     if (!isOpen) {
       if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
-      setScrollProgress(0);
+      activeStepRef.current = 0;
+      setActiveStep(0);
       setIsCompleted(false);
       playedMilestones.current = { 1: false, 2: false, 3: false, 4: false };
       completionTriggered.current = false;
@@ -43,7 +54,8 @@ export default function KineticProverbModal({ isOpen, onClose }) {
       new CustomEvent('f1-suppress', { detail: { suppress: true } })
     );
 
-    setScrollProgress(0);
+    activeStepRef.current = 0;
+    setActiveStep(0);
     setIsCompleted(false);
     playedMilestones.current = { 1: false, 2: false, 3: false, 4: false };
     completionTriggered.current = false;
@@ -70,41 +82,74 @@ export default function KineticProverbModal({ isOpen, onClose }) {
     };
   }, [isOpen]);
 
+  // High-performance rAF-throttled scroll handler
   const handleScroll = (e) => {
+    if (rafPending.current) return;
+    rafPending.current = true;
+
     const el = e.currentTarget;
-    const maxScroll = el.scrollHeight - el.clientHeight;
-    if (maxScroll <= 0) return;
+    requestAnimationFrame(() => {
+      rafPending.current = false;
+      if (!el) return;
 
-    const progress = Math.min(1, Math.max(0, el.scrollTop / maxScroll));
-    setScrollProgress(progress);
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 0) return;
 
-    // Audio cues for scroll milestones
-    if (progress >= 0.12 && !playedMilestones.current[1]) {
-      playedMilestones.current[1] = true;
-      playTactileClick();
-    }
-    if (progress >= 0.35 && !playedMilestones.current[2]) {
-      playedMilestones.current[2] = true;
-      playTactileClick();
-    }
-    if (progress >= 0.58 && !playedMilestones.current[3]) {
-      playedMilestones.current[3] = true;
-      playTactileClick();
-    }
-    if (progress >= 0.78 && !playedMilestones.current[4]) {
-      playedMilestones.current[4] = true;
-      playSuccessChime();
-    }
+      const progress = Math.min(1, Math.max(0, el.scrollTop / maxScroll));
 
-    // Once user scrolls to completion (>= 95%)
-    if (progress >= 0.95 && !completionTriggered.current) {
-      completionTriggered.current = true;
-      setIsCompleted(true);
-      // Auto-dismiss smoothly after reading (~1.5s)
-      autoCloseTimer.current = setTimeout(() => {
-        handleClose();
-      }, 1500);
-    }
+      // 1. Direct DOM updates (0 React re-renders at 60/120 FPS)
+      if (progressBarRef.current) {
+        progressBarRef.current.style.width = `${progress * 100}%`;
+      }
+      if (progressTextRef.current) {
+        progressTextRef.current.innerText = `Scroll Progress: ${Math.round(progress * 100)}%`;
+      }
+      if (scrollPromptRef.current) {
+        scrollPromptRef.current.style.opacity = progress > 0.08 ? '0' : '1';
+        scrollPromptRef.current.style.pointerEvents = progress > 0.08 ? 'none' : 'auto';
+      }
+
+      // 2. Discrete Step Detection (ONLY re-renders React when changing step 0 -> 1 -> 2 -> 3 -> 4)
+      let nextStep = 0;
+      if (progress >= 0.76) nextStep = 4;
+      else if (progress >= 0.52) nextStep = 3;
+      else if (progress >= 0.28) nextStep = 2;
+      else if (progress >= 0.08) nextStep = 1;
+
+      if (nextStep !== activeStepRef.current) {
+        activeStepRef.current = nextStep;
+        setActiveStep(nextStep);
+
+        // Ambient glow brightness
+        if (ambientGlowRef.current) {
+          ambientGlowRef.current.style.opacity = nextStep === 4 ? '1' : '0.35';
+        }
+
+        // Trigger sound once per step
+        if (nextStep === 1 && !playedMilestones.current[1]) {
+          playedMilestones.current[1] = true;
+          playTactileClick();
+        } else if (nextStep === 2 && !playedMilestones.current[2]) {
+          playedMilestones.current[2] = true;
+          playTactileClick();
+        } else if (nextStep === 3 && !playedMilestones.current[3]) {
+          playedMilestones.current[3] = true;
+          playTactileClick();
+        } else if (nextStep === 4 && !playedMilestones.current[4]) {
+          playedMilestones.current[4] = true;
+          playSuccessChime();
+        }
+      }
+
+      // 3. Auto-dismiss trigger when reaching end (progress >= 96%)
+      if (progress >= 0.96 && !completionTriggered.current) {
+        completionTriggered.current = true;
+        setIsCompleted(true);
+        autoCloseTimer.current = setTimeout(() => {
+          handleClose();
+        }, 1400);
+      }
+    });
   };
 
   const handleClose = () => {
@@ -117,12 +162,6 @@ export default function KineticProverbModal({ isOpen, onClose }) {
     onClose();
   };
 
-  // Milestone thresholds
-  const isLine1Active = scrollProgress >= 0.10; // JACK
-  const isLine2Active = scrollProgress >= 0.32; // OF ALL TRADES.
-  const isLine3Active = scrollProgress >= 0.55; // MASTER OF NONE.
-  const isLine4Active = scrollProgress >= 0.78; // ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -130,19 +169,19 @@ export default function KineticProverbModal({ isOpen, onClose }) {
           key="scroll-proverb-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.45, ease: 'easeInOut' } }}
-          className="fixed inset-0 z-[100]"
+          exit={{ opacity: 0, transition: { duration: 0.3, ease: 'easeOut' } }}
+          className="fixed inset-0 z-[100] transform-gpu"
         >
-          {/* Top Fixed Control Bar: Scroll Progress + Skip Button */}
-          <div className="fixed top-6 right-6 sm:top-8 sm:right-8 z-30 flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 border border-white/10 text-[11px] font-mono text-zinc-400 backdrop-blur-md">
+          {/* Top Control Bar: Progress Counter & Skip Button */}
+          <div className="fixed top-6 right-6 sm:top-8 sm:right-8 z-30 flex items-center gap-3 pointer-events-auto">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/80 border border-white/10 text-[11px] font-mono text-zinc-400">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              <span>Scroll Progress: {Math.round(scrollProgress * 100)}%</span>
+              <span ref={progressTextRef}>Scroll Progress: 0%</span>
             </div>
 
             <button
               onClick={handleClose}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-300 hover:text-white text-xs font-mono transition-all active:scale-95 cursor-pointer shadow-xl backdrop-blur-md"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-300 hover:text-white text-xs font-mono transition-all active:scale-95 cursor-pointer shadow-xl backdrop-blur-sm"
               title="Skip (Esc)"
             >
               <span>Skip</span>
@@ -150,42 +189,44 @@ export default function KineticProverbModal({ isOpen, onClose }) {
             </button>
           </div>
 
-          {/* Top Thin Progress Line */}
-          <div className="fixed top-0 left-0 right-0 h-1 bg-white/5 z-30">
+          {/* Top Thin Progress Line (Direct DOM transform for zero jank) */}
+          <div className="fixed top-0 left-0 right-0 h-1 bg-white/5 z-30 pointer-events-none">
             <div
-              className="h-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 transition-all duration-75"
-              style={{ width: `${scrollProgress * 100}%` }}
+              ref={progressBarRef}
+              className="h-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 will-change-transform"
+              style={{ width: '0%' }}
             />
           </div>
 
-          {/* Scrollable Container (User scrolls this element) */}
+          {/* Scrollable Container (Native browser compositor scrolling) */}
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="w-full h-full overflow-y-auto bg-black/92 backdrop-blur-2xl select-none"
+            className="w-full h-full overflow-y-auto bg-[#050507]/97 backdrop-blur-md select-none transform-gpu"
           >
-            {/* Scroll Track: 280vh gives generous physical scrolling travel */}
-            <div className="relative h-[280vh] w-full">
-              {/* Sticky Center Stage (Pinned to viewport while user scrolls) */}
+            {/* Scroll Track: 260vh gives ample physical travel */}
+            <div className="relative h-[260vh] w-full">
+              {/* Sticky Center Stage (Pinned to viewport) */}
               <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center p-4 sm:p-10 pointer-events-none">
-                {/* Ambient Radial Glow */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-amber-500/15 via-cyan-500/10 to-transparent rounded-full blur-[140px] transition-opacity duration-500"
-                    style={{ opacity: isLine4Active ? 1 : 0.4 }}
-                  />
-                </div>
+                {/* Lightweight Radial Ambient Shader (Zero Gaussian blur cost) */}
+                <div
+                  ref={ambientGlowRef}
+                  className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-40"
+                  style={{
+                    background: 'radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.15) 0%, rgba(6, 182, 212, 0.06) 45%, transparent 70%)',
+                  }}
+                />
 
                 {/* Main Glass Card (Pure Typography) */}
-                <div className="w-full max-w-4xl max-h-[88vh] overflow-y-auto rounded-3xl p-6 sm:p-12 md:p-16 border border-white/15 bg-gradient-to-b from-[#0e0e14]/95 via-[#07070b]/98 to-[#040407]/98 shadow-[0_25px_80px_rgba(0,0,0,0.95)] relative pointer-events-auto my-auto">
+                <div className="w-full max-w-4xl max-h-[88vh] overflow-y-auto rounded-3xl p-6 sm:p-12 md:p-16 border border-white/15 bg-gradient-to-b from-[#0e0e14]/98 via-[#07070b] to-[#040407] shadow-[0_25px_80px_rgba(0,0,0,0.95)] relative pointer-events-auto my-auto transform-gpu">
                   {/* Kinetic Typography Stack */}
                   <div className="space-y-4 sm:space-y-6">
                     {/* Line 1: JACK */}
                     <div
-                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-300 ${
-                        isLine1Active
-                          ? 'opacity-100 text-white scale-100 blur-0 translate-y-0'
-                          : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
+                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-200 will-change-transform ${
+                        activeStep >= 1
+                          ? 'opacity-100 text-white translate-y-0 scale-100'
+                          : 'opacity-15 text-zinc-600 translate-y-1 scale-[0.98]'
                       }`}
                     >
                       JACK
@@ -193,10 +234,10 @@ export default function KineticProverbModal({ isOpen, onClose }) {
 
                     {/* Line 2: OF ALL TRADES. */}
                     <div
-                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-300 ${
-                        isLine2Active
-                          ? 'opacity-100 text-zinc-200 scale-100 blur-0 translate-y-0'
-                          : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
+                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-200 will-change-transform ${
+                        activeStep >= 2
+                          ? 'opacity-100 text-zinc-200 translate-y-0 scale-100'
+                          : 'opacity-15 text-zinc-600 translate-y-1 scale-[0.98]'
                       }`}
                     >
                       OF ALL TRADES.
@@ -204,10 +245,10 @@ export default function KineticProverbModal({ isOpen, onClose }) {
 
                     {/* Line 3: MASTER OF NONE. */}
                     <div
-                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-300 ${
-                        isLine3Active
-                          ? 'opacity-100 text-zinc-400 scale-100 blur-0 translate-y-0'
-                          : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
+                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-200 will-change-transform ${
+                        activeStep >= 3
+                          ? 'opacity-100 text-zinc-400 translate-y-0 scale-100'
+                          : 'opacity-15 text-zinc-600 translate-y-1 scale-[0.98]'
                       }`}
                     >
                       MASTER OF NONE.
@@ -215,13 +256,13 @@ export default function KineticProverbModal({ isOpen, onClose }) {
 
                     {/* Line 4: THE GOLDEN TWIST */}
                     <div
-                      className={`pt-6 sm:pt-8 mt-4 sm:mt-6 border-t border-white/10 transition-all duration-500 ${
-                        isLine4Active
-                          ? 'opacity-100 scale-100 blur-0 translate-y-0'
-                          : 'opacity-0 scale-95 blur-md translate-y-3'
+                      className={`pt-6 sm:pt-8 mt-4 sm:mt-6 border-t border-white/10 transition-all duration-300 will-change-transform ${
+                        activeStep >= 4
+                          ? 'opacity-100 translate-y-0 scale-100'
+                          : 'opacity-0 translate-y-3 scale-95'
                       }`}
                     >
-                      <div className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-extrabold tracking-normal leading-[1.25] bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(251,191,36,0.55)]">
+                      <div className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-extrabold tracking-normal leading-[1.25] bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 bg-clip-text text-transparent drop-shadow-[0_2px_15px_rgba(251,191,36,0.45)]">
                         ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
                       </div>
                     </div>
@@ -240,14 +281,13 @@ export default function KineticProverbModal({ isOpen, onClose }) {
 
                 {/* Initial Scroll Prompt (Positioned safely at viewport bottom, never overlapping card) */}
                 <div
-                  className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1 text-zinc-400 text-xs font-mono transition-opacity duration-300 pointer-events-none ${
-                    scrollProgress > 0.08 ? 'opacity-0' : 'opacity-100 animate-bounce'
-                  }`}
+                  ref={scrollPromptRef}
+                  className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1 text-zinc-400 text-xs font-mono transition-opacity duration-300 pointer-events-none"
                 >
-                  <span className="tracking-wider uppercase text-[10px] text-amber-400 font-bold bg-black/60 px-2.5 py-0.5 rounded-full border border-amber-400/30 backdrop-blur-sm">
-                    Scroll down with mouse wheel ↓
+                  <span className="tracking-wider uppercase text-[10px] text-amber-400 font-bold bg-black/80 px-3 py-1 rounded-full border border-amber-400/30">
+                    Scroll down with mouse wheel or trackpad ↓
                   </span>
-                  <ChevronDown className="w-4 h-4 text-amber-400" />
+                  <ChevronDown className="w-4 h-4 text-amber-400 animate-bounce" />
                 </div>
               </div>
             </div>
