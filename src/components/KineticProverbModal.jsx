@@ -1,25 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { X, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { playTactileClick, playSuccessChime } from '../utils/soundEffects';
 
 /**
  * KineticProverbModal
  * 
- * Scroll-driven kinetic typography pop-up modal inspired by arddev.in.
+ * Clean, minimalist scroll-driven kinetic typography pop-up modal.
  * Triggers automatically at the bottom of "Skills & Tools".
  * 
- * Behavior:
- * - Text reveals as the user SCROLLS (not by auto-timer).
- * - Full proverb with the golden twist:
- *   1. JACK
- *   2. OF ALL TRADES.
- *   3. MASTER OF NONE.
- *   4. ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE. (Golden twist)
- *   5. Subtext: Full-Stack MERN Core × Financial Data Analytics
- * - Once fully scrolled and displayed, auto-dismisses smoothly after a brief pause.
- * - Skip (Esc / button) available at all times.
- * - Suppresses F1 car during display.
+ * Features pure bold typography:
+ * 1. JACK
+ * 2. OF ALL TRADES.
+ * 3. MASTER OF NONE.
+ * 4. ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
  */
 export default function KineticProverbModal({ isOpen, onClose }) {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -102,7 +96,7 @@ export default function KineticProverbModal({ isOpen, onClose }) {
       playSuccessChime();
     }
 
-    // Once user scrolls to completion (>= 96%)
+    // Once user scrolls to completion (>= 95%)
     if (progress >= 0.95 && !completionTriggered.current) {
       completionTriggered.current = true;
       setIsCompleted(true);
@@ -128,7 +122,6 @@ export default function KineticProverbModal({ isOpen, onClose }) {
   const isLine2Active = scrollProgress >= 0.32; // OF ALL TRADES.
   const isLine3Active = scrollProgress >= 0.55; // MASTER OF NONE.
   const isLine4Active = scrollProgress >= 0.78; // ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
-  const isSubtextActive = scrollProgress >= 0.88; // Subtext
 
   return (
     <AnimatePresence>
@@ -183,27 +176,13 @@ export default function KineticProverbModal({ isOpen, onClose }) {
                   />
                 </div>
 
-                {/* Main Glass Card */}
-                <div className="w-full max-w-4xl max-h-[88vh] overflow-y-auto rounded-3xl p-6 sm:p-10 md:p-12 border border-white/15 bg-gradient-to-b from-[#0e0e14]/95 via-[#07070b]/98 to-[#040407]/98 shadow-[0_25px_80px_rgba(0,0,0,0.95)] relative pointer-events-auto my-auto">
-                  {/* Top Philosophy Tag */}
-                  <div className="flex items-center justify-between pb-4 sm:pb-5 mb-5 sm:mb-6 text-xs font-mono uppercase tracking-widest border-b border-white/10 text-zinc-500">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                      <span className="text-zinc-300 font-semibold">Engineering Philosophy</span>
-                      <span className="text-zinc-600">•</span>
-                      <span className="text-zinc-400 font-sans normal-case">The Complete Proverb</span>
-                    </div>
-
-                    <span className="hidden sm:inline text-[11px] text-zinc-400 font-mono">
-                      Scroll to advance ↓
-                    </span>
-                  </div>
-
-                  {/* Kinetic Typography Stack (Generous line heights & margins to prevent any text overlap) */}
-                  <div className="space-y-3 sm:space-y-5">
+                {/* Main Glass Card (Pure Typography) */}
+                <div className="w-full max-w-4xl max-h-[88vh] overflow-y-auto rounded-3xl p-6 sm:p-12 md:p-16 border border-white/15 bg-gradient-to-b from-[#0e0e14]/95 via-[#07070b]/98 to-[#040407]/98 shadow-[0_25px_80px_rgba(0,0,0,0.95)] relative pointer-events-auto my-auto">
+                  {/* Kinetic Typography Stack */}
+                  <div className="space-y-4 sm:space-y-6">
                     {/* Line 1: JACK */}
                     <div
-                      className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight uppercase leading-[1.15] transition-all duration-300 ${
+                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-300 ${
                         isLine1Active
                           ? 'opacity-100 text-white scale-100 blur-0 translate-y-0'
                           : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
@@ -214,7 +193,7 @@ export default function KineticProverbModal({ isOpen, onClose }) {
 
                     {/* Line 2: OF ALL TRADES. */}
                     <div
-                      className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight uppercase leading-[1.15] transition-all duration-300 ${
+                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-300 ${
                         isLine2Active
                           ? 'opacity-100 text-zinc-200 scale-100 blur-0 translate-y-0'
                           : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
@@ -225,7 +204,7 @@ export default function KineticProverbModal({ isOpen, onClose }) {
 
                     {/* Line 3: MASTER OF NONE. */}
                     <div
-                      className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight uppercase leading-[1.15] transition-all duration-300 ${
+                      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[1.12] transition-all duration-300 ${
                         isLine3Active
                           ? 'opacity-100 text-zinc-400 scale-100 blur-0 translate-y-0'
                           : 'opacity-15 text-zinc-600 scale-[0.98] blur-[1px] translate-y-1'
@@ -234,44 +213,29 @@ export default function KineticProverbModal({ isOpen, onClose }) {
                       MASTER OF NONE.
                     </div>
 
-                    {/* Line 4: THE GOLDEN TWIST (Clean separated block with generous line height) */}
+                    {/* Line 4: THE GOLDEN TWIST */}
                     <div
-                      className={`pt-5 sm:pt-6 mt-4 sm:mt-6 border-t border-white/10 transition-all duration-500 ${
+                      className={`pt-6 sm:pt-8 mt-4 sm:mt-6 border-t border-white/10 transition-all duration-500 ${
                         isLine4Active
                           ? 'opacity-100 scale-100 blur-0 translate-y-0'
                           : 'opacity-0 scale-95 blur-md translate-y-3'
                       }`}
                     >
-                      <div className="text-xl sm:text-3xl md:text-4xl lg:text-4xl font-extrabold tracking-normal leading-[1.3] bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(251,191,36,0.5)]">
+                      <div className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-extrabold tracking-normal leading-[1.25] bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(251,191,36,0.55)]">
                         ...BUT OFTENTIMES BETTER THAN A MASTER OF ONE.
                       </div>
                     </div>
                   </div>
 
-                  {/* Bottom Context Badge */}
-                  <div
-                    className={`mt-6 pt-5 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs transition-all duration-500 ${
-                      isSubtextActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 text-zinc-400">
-                      <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-ping" />
-                      <span className="font-mono text-zinc-300 font-semibold tracking-wide">
-                        Ashutosh Gautam: Full-Stack MERN Core × Financial Data Analytics
-                      </span>
-                    </div>
-
-                    {isCompleted ? (
-                      <span className="text-emerald-400 font-mono text-[11px] flex items-center gap-1.5 animate-pulse font-semibold">
+                  {/* Minimal Closing Status (Fades in only upon completion) */}
+                  {isCompleted && (
+                    <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-end text-emerald-400 font-mono text-[11px] animate-pulse">
+                      <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Closing message...</span>
-                      </span>
-                    ) : (
-                      <span className="text-zinc-500 text-[11px] font-mono">
-                        Scroll further to complete
-                      </span>
-                    )}
-                  </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Initial Scroll Prompt (Positioned safely at viewport bottom, never overlapping card) */}
